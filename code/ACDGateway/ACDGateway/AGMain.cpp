@@ -33,7 +33,7 @@ void AGService::OnStop()
 
 void AGService::Main()
 {
-	//
+	//ฒโสิด๚ย๋ษฯดซ
 }
 
 
