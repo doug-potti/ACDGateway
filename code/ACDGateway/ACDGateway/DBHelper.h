@@ -21,13 +21,13 @@ public:
 	~DBHelper();
 
 
-	int GetFieldType(int index);
+	int  GetFieldType(int index);
 	bool ExeSelectSQL(char* sqltext);
 	bool MoveNextRecord();
 	bool MoveFirstRecord();
 	bool GetFieldVlaue(int index,_variant_t* value);
-	int GetFieldCount();
-	int GetRecordCount();
+	int  GetFieldCount();
+	int  GetRecordCount();
 	bool ExecCommandSQL(char * sqltext);
 	bool DisConnectDB();
 	bool ConnectDB(const char* connstr);
