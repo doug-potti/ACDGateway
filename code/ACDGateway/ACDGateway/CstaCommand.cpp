@@ -1,5 +1,7 @@
 #include "CstaCommand.h"
+#include "CstaInterface.h"
 
+CstaCmdThreadPtr                   gCstaCmdThread;
 
 void CstaCommand::AddTsapiCmdToQueue(TsapiCommand_t *pCommand)
 {
@@ -59,17 +61,31 @@ void CstaCommand::ProcessCstaCmd(TsapiCommand_t *pCommand)
 	{
 	case MonitorDevice:
 		{
-
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->MonitorDevice(pCommand->activeDevId, 
+												 pCommand->invokeId);
+			}
 		}
 		break;
 	case MonitorViaDevice:
 		{
-
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->MonitorViaDevice(pCommand->activeDevId, 
+													pCommand->invokeId);
+			}
 		}
 		break;
 	case MakeCall:
 		{
-
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->CallMake(pCommand->activeDevId, 
+											pCommand->destNo, 
+											pCommand->uui, 
+											pCommand->invokeId);
+			}
 		}
 		break;
 	}

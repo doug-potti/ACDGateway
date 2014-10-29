@@ -4,6 +4,8 @@
 #include <IceUtil/IceUtil.h>
 #include "AGUtil.h"
 
+using namespace std;
+
 class CstaInterface:public IceUtil::Thread
 {
 private:
@@ -19,11 +21,12 @@ public:
 	void stoprun();	
 	bool OpenAcsStream(std::string acsServerName, std::string acsUser, std::string acsPassword);
 	bool CloseAcsStream();
-	bool MonitorDevice(std::string devId);
-	bool MonitorViaDevice(std::string viaDevId);
-	bool StopMonitorDevice(long monitorRefId, std::string devId);
-	bool QueryDeviceInfo(std::string  deviceId);
+	bool MonitorDevice(std::string devId, unsigned long invokeId);
+	bool MonitorViaDevice(std::string viaDevId, unsigned long invokeId);
+	bool StopMonitorDevice(long monitorRefId, std::string devId, unsigned long invokeId);
+	bool QueryDeviceInfo(std::string  deviceId, unsigned long invokeId);
 	bool CallMake(std::string devId, std::string destNo, std::string userData,unsigned long invokeId);
+	void SetPauseFlag(bool isPause);
 
 private:
 	static CstaInterface*						cstaInterfaceSelf;

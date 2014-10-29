@@ -20,7 +20,8 @@ public:
 	DBHelper();
 	~DBHelper();
 
-
+	bool GetDevFromDB();
+private:
 	int  GetFieldType(int index);
 	bool ExeSelectSQL(char* sqltext);
 	bool MoveNextRecord();
@@ -43,5 +44,7 @@ private:
 	_CommandPtr							m_pCommand;
 	_RecordsetPtr						m_pRecordSet;
 };
+
+extern DBHelper*                        gDBHelper;                         
 
 #endif

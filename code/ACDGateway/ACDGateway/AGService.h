@@ -37,6 +37,7 @@ public:
 	static INT_PTR CALLBACK StaticTSvrLstWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
+	void StratMonitorDevice();  
 };
 
 const unsigned int ACDGW_MAJOR_VERSION						= 1;

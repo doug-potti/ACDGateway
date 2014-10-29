@@ -1,0 +1,12 @@
+[TSAPI]
+TServerName=AVAYA#S8300#CSTA#FINETELAES02
+LoginID=ctiuser
+Password=Avaya*101
+[DB]
+DBType=MSSQL
+DBIp=192.168.1.102
+DBName=pzdb
+DBUser=sa
+DBPwd=finetel,1234
+
+

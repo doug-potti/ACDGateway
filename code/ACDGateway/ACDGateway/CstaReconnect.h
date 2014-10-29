@@ -6,7 +6,7 @@
 class CstaReconnectThd:public IceUtil::Thread
 {
 public:
-	CstaReconnectThd():isDone(false), isReconnectiong(false)
+	CstaReconnectThd():isDone(false), isReconnecting(false)
 	{
 		reconnectHandle = CreateEvent(NULL,FALSE,FALSE, NULL);
 	}
@@ -18,7 +18,7 @@ private:
 	bool ReconnectTs();
 private:
 	bool   isDone;
-	bool   isReconnectiong;
+	bool   isReconnecting;
 	HANDLE reconnectHandle;
 };
 

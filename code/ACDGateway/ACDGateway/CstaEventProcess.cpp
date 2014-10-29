@@ -1,5 +1,7 @@
 #include "CstaEventProcess.h"
 #include "CstaErrorDesc.h"
+#include "MonitorThread.h"
+#include "CstaReconnect.h"
 
 CstaEventProcessPtr gCstaEventProcessThd;
 
@@ -114,7 +116,7 @@ void CstaEventProcess::ProcessACSUnsolicited(AvayaPbxEvent_t * pbxEventData)
 
 		CstaErrorDesc::GetACSUniversalFailureDes(errCode, arrErrMsg);
 		sslog<<"CstaEventProcess.ProcessACSUnsolicited.ACS_UNIVERSAL_FAILURE \r\n code"<<
-			arrErrMsg<<std::endl;
+				arrErrMsg<<std::endl;
 
 		OUTERRORLOG(sslog.str());
 		sslog.str("");
@@ -124,6 +126,11 @@ void CstaEventProcess::ProcessACSUnsolicited(AvayaPbxEvent_t * pbxEventData)
 			sslog<<"CstaEventProcess.ProcessACSUnsolicited Stream to TServer is failed stop ts service and start restart thread"<<std::endl;
 			OUTERRORLOG(sslog.str());
 			sslog.str("");
+			if (gCstaReconnectThd == NULL)
+			{
+				gCstaReconnectThd = new CstaReconnectThd();
+			}
+			gCstaReconnectThd->StartCstaReconnect();
 
 		}
 		break;
@@ -150,6 +157,24 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_MONITOR_CONF:
 		{
+			std::string devId;
+			long refid = pConEvent->u.monitorStart.monitorCrossRefID;
+			int reqType = AGHelper::AnalyzeInvokeId(pConEvent->invokeID, devId);
+			sslog<<"CstaEventProcess.ProcessCSTAConfirmation.CSTA_MONITOR_CONF monitor device conf deviceid:"<<
+					devId<<" monitorrefid:"<<
+					refid<<std::endl;
+			OUTINFOLOG(sslog.str());
+			sslog.str("");
+
+			std::vector<Dev_t *>::iterator iter = AGHelper::sDevList.begin();
+			for (; iter != AGHelper::sDevList.end(); ++iter)
+			{
+				if ((*iter)->devId == devId)
+				{
+					(*iter)->monRefId = refid;
+					AGHelper::AddMonDevToMDM(refid, (*iter));
+				}
+			}
 
 		}
 		break;
@@ -160,7 +185,30 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_UNIVERSAL_FAILURE_CONF:
 		{
-
+			std::string deviD;
+			int cstaReqType = AGHelper::AnalyzeInvokeId(pConEvent->invokeID, deviD);
+			std::string errdesc = CstaErrorDesc::GetCstaUniversalFailureDes(pConEvent->u.universalFailure.error);
+			sslog<<"CstaEventProcess.ProcessCSTAConfirmation CSTA_UNIVERSAL_FAILURE_CONF csta conf failuer devId:"<<
+					deviD <<" requestType:"<<
+					AGHelper::ConvertTaspiCmdToString((EnTsapiCmdType)cstaReqType)<<" errmsg:"<<
+					errdesc<<std::endl;
+			OUTERRORLOG(sslog.str());
+			sslog.str("");
+			if (cstaReqType == (int)MonitorDevice ||
+				cstaReqType == (int)MonitorViaDevice)
+			{
+				std::vector<Dev_t *>::iterator iter = AGHelper::sDevList.begin();
+				for (; iter != AGHelper::sDevList.end(); ++ iter)
+				{
+					if ((*iter)->devId == deviD)
+					{
+						if (gMonitorThread !=NULL)
+						{
+							gMonitorThread->AddMonDevToMQ(*iter);
+						}
+					}
+				}
+			}
 		}
 		break;
 	default:
@@ -172,6 +220,118 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 {
 	CheckEventData(pbxEventData);
 	WriteCSTAUnsolicited(pbxEventData);
+	CSTAEvent_t *pCstaEvent         = (CSTAEvent_t *)(pbxEventData->cstaEvent);
+	CSTAUnsolicitedEvent *pCstaUnse = &(pCstaEvent->event.cstaUnsolicited);
+	ATTEvent_t           *pAttevent = &(pbxEventData->attEvent);
+	std::stringstream sslog("");
+	switch (pCstaEvent->eventHeader.eventType)
+	{
+	case CSTA_CALL_CLEARED:
+		{
+			
+		}
+		break;
+	case CSTA_CONFERENCED:
+		{
+			
+		}
+		break;
+	case CSTA_CONNECTION_CLEARED:
+		{
+			
+		}
+		break;
+	case CSTA_DELIVERED:
+		{
+			
+		}
+		break;
+	case CSTA_DIVERTED:
+		{
+			
+		}
+		break;
+	case CSTA_ESTABLISHED:
+		{
+			
+		}
+		break;
+	case CSTA_FAILED:
+		{
+			
+		}
+		break;
+	case CSTA_HELD:
+		{
+			
+		}
+		break;
+	case CSTA_MONITOR_ENDED:
+		{
+			long refId = pCstaUnse->monitorCrossRefId;
+			Dev_t *dev = AGHelper::FindDevByRefId(refId);
+			if (dev != NULL)
+			{
+				sslog<<"CstaEventProcess.ProcessCSTAUnsolicited devId:"<<
+					   dev->devId<<" refId:"<<
+					   refId<<std::endl;
+				OUTERRORLOG(sslog.str());
+				sslog.str("");
+
+				if (gMonitorThread)
+				{
+					gMonitorThread->AddMonDevToMQ(dev);
+				}
+				AGHelper::RemoveMonDevByRefId(refId);
+			}
+		}
+		break;
+	case CSTA_NETWORK_REACHED:
+		{
+
+		}
+		break;
+	case CSTA_ORIGINATED:
+		{
+			
+		}
+		break;
+	case CSTA_QUEUED:
+		{
+			
+		}
+		break;
+	case CSTA_RETRIEVED:
+		{
+			
+		}
+		break;
+	case CSTA_SERVICE_INITIATED:
+		{
+			
+		}
+		break;
+	case CSTA_TRANSFERRED:
+		{
+			
+		}
+		break;
+	case CSTA_LOGGED_ON:
+		{
+			std::string devId = pCstaUnse->u.loggedOn.agentDevice.deviceID;
+			std::string agentId = pCstaUnse->u.loggedOn.agentID;
+			//wait process
+		}
+		break;
+	case CSTA_LOGGED_OFF:
+		{
+			std::string devId = pCstaUnse->u.loggedOff.agentDevice.deviceID;
+			//wait process
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 void CstaEventProcess::ProcessCSTAEventReport(AvayaPbxEvent_t * pbxEventData)
@@ -195,7 +355,11 @@ void CstaEventProcess::ProcessCSTAEventReport(AvayaPbxEvent_t * pbxEventData)
 				break;
 			case SS_DISABLED:
 				OUTERRORLOG("Link(Avaya AES & CM) is down start ts reconnect thread.");
-				//启动重练线程
+				if (gCstaReconnectThd == NULL)
+				{
+					gCstaReconnectThd = new CstaReconnectThd();
+				}
+				gCstaReconnectThd->StartCstaReconnect();
 				break;
 			default:
 				break;

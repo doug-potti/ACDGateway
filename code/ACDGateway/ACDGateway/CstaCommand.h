@@ -23,6 +23,7 @@ private:
 	ICERECMUTEX      cqRecMutex;
 };
 
-
+typedef IceUtil::Handle<CstaCommand>       CstaCmdThreadPtr;
+extern  CstaCmdThreadPtr                   gCstaCmdThread;
 
 #endif
