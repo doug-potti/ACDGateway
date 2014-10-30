@@ -44,10 +44,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\..\libs\Ice-3.5.1\iceutild.lib;..\..\..\libs\libevent-2.0.21\libevent.lib;..\..\..\libs\libevent-2.0.21\libevent_core.lib;..\..\..\libs\libevent-2.0.21\libevent_extras.lib;..\..\..\libs\log4cplus-1.1.0\log4cplusD.lib;..\..\..\libs\tsapi-6.1.1\ATTPRV32.lib;..\..\..\libs\tsapi-6.1.1\csta32.lib;..\..\..\libs\ServiceFrame\ServiceFrameD.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\libs\Ice-3.5.1\iceutild.lib;..\..\..\libs\libevent-2.0.21\libevent.lib;..\..\..\libs\libevent-2.0.21\libevent_core.lib;..\..\..\libs\libevent-2.0.21\libevent_extras.lib;..\..\..\libs\log4cplus-1.1.0\log4cplusD.lib;..\..\..\libs\tsapi-6.1.1\ATTPRV32.lib;..\..\..\libs\tsapi-6.1.1\csta32.lib;..\..\..\libs\ServiceFrame\ServiceFrameD.lib;ws2_32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -65,6 +66,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AGHelper.cpp" />
+    <ClCompile Include="AGHttpServer.cpp" />
     <ClCompile Include="AGLogHelper.cpp" />
     <ClCompile Include="AGMain.cpp" />
     <ClCompile Include="CstaCommand.cpp" />
@@ -76,6 +78,7 @@
     <ClCompile Include="MonitorThread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AGHttpServer.h" />
     <ClInclude Include="AGLogHelper.h" />
     <ClInclude Include="AGService.h" />
     <ClInclude Include="AGUtil.h" />

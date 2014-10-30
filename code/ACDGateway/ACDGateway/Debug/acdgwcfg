@@ -8,5 +8,8 @@ DBIp=192.168.1.102
 DBName=pzdb
 DBUser=sa
 DBPwd=finetel,1234
+[HTTP]
+HttpServerIp=127.0.0.1
+HttpServerPort=8081
 
 

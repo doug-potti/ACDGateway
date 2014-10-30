@@ -106,6 +106,8 @@ struct AcdgwCfg_t
 	std::string                         dbName;
 	std::string                         dbUser;
 	std::string                         dbPasswnd;
+	std::string                         httpSvrIp;
+	std::string                         httpSvrPort;
 
 	std::string   ToString()
 	{
@@ -130,6 +132,12 @@ struct AcdgwCfg_t
 		strCfg.append("\r\n\t\t");
 		strCfg.append("DBUser:");
 		strCfg.append(dbUser);
+		strCfg.append("\r\n\t\t");
+		strCfg.append("HttpSvtIp:");
+		strCfg.append(httpSvrIp);
+		strCfg.append("\r\n\t\t");
+		strCfg.append("HttpSvrPort:");
+		strCfg.append(httpSvrPort);
 		return strCfg;
 	}
 };

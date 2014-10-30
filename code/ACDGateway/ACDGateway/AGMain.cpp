@@ -6,6 +6,7 @@
 #include "CstaInterface.h"
 #include "MonitorThread.h"
 #include "CstaReconnect.h"
+#include "AGHttpServer.h"
 
 
 void AGService::OnBeforeStart()
@@ -49,6 +50,12 @@ BOOL AGService::OnStart()
 	if (gMonitorThread == NULL)
 	{
 		gMonitorThread = new MonitorThread();
+	}
+
+	if (gAGHttpServer == NULL)
+	{
+		gAGHttpServer = new AGHttpServer(AGHelper::sAcdgwCfg.httpSvrIp, 
+										 atoi(AGHelper::sAcdgwCfg.httpSvrPort.c_str()));
 	}
 	return TRUE;
 }
@@ -98,8 +105,11 @@ void AGService::Main()
 	OUTINFOLOG("ACDGateway start csta command recive&process thread.");
 	gMonitorThread->start();
 	OUTINFOLOG("ACDGateway start monitor device thread.");
-
+	gAGHttpServer->start();
+	OUTINFOLOG("ACDGateway start http server thread.");
 	StratMonitorDevice();
+
+
 
 }
 

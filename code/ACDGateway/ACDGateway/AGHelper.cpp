@@ -86,6 +86,12 @@ void AGHelper::GetAcdgwCfgInfo()
 	GetPrivateProfileString("DB", "DBPwd", "default", bufTemp, 64, buf);
 	sAcdgwCfg.dbPasswnd = bufTemp;
 	memset(bufTemp, 0, 64);
+	GetPrivateProfileString("HTTP", "HttpServerIp", "127.0.0.1", bufTemp, 64, buf);
+	sAcdgwCfg.httpSvrIp = bufTemp;
+	memset(bufTemp, 0, 64);
+	GetPrivateProfileString("HTTP", "HttpServerPort", "8081", bufTemp, 64, buf);
+	sAcdgwCfg.httpSvrPort = bufTemp;
+	memset(bufTemp, 0, 64);
 }
 
 void AGHelper::AddMonDevToMDM(long refId, Dev_t *monDev)
