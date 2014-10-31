@@ -7,6 +7,9 @@
 #include "MonitorThread.h"
 #include "CstaReconnect.h"
 #include "AGHttpServer.h"
+#include "AGUtil.h"
+
+AGService *gAGService;
 
 
 void AGService::OnBeforeStart()
@@ -65,6 +68,7 @@ BOOL AGService::OnStart()
 
 void AGService::OnStop()
 {
+	isDone = true;
 	ServiceProcess_c::OnStop();
 }
 
@@ -109,7 +113,65 @@ void AGService::Main()
 	OUTINFOLOG("ACDGateway start http server thread.");
 	StratMonitorDevice();
 
+	while (!isDone)
+	{
+		IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(tlMutex);
+		while(taskList.size() == 0)
+		{
+			tlMutex.wait();
+		}
 
+		AGTask *pTmpTask = NULL;
+		pTmpTask = taskList.front();
+		taskList.pop();
+		if (pTmpTask != NULL)
+		{
+			try
+			{
+				switch(pTmpTask->GetTaskType())
+				{
+				case Distribute:
+					{
+						TaskDev_t *taskDev = AGHelper::FindIdleTaskDev();
+						while((taskDev = AGHelper::FindIdleTaskDev()) == NULL)
+						{
+							WaitForSingleObject(waitIdleDevHandle, INFINITE);
+						}
+						DistributeAgentTask *disTask = dynamic_cast<DistributeAgentTask *>(pTmpTask);
+						disTask->SetTaskDevId(taskDev->taskDevId);
+						AGHelper::AddTaskToTL(pTmpTask);
+						pTmpTask->ExcuteTask();
+					}
+					break;
+				case Transer:
+					{
+						TaskDev_t *taskDev = AGHelper::FindIdleTaskDev();
+						while((taskDev = AGHelper::FindIdleTaskDev()) == NULL)
+						{
+							WaitForSingleObject(waitIdleDevHandle, INFINITE);
+						}
+						TransferTask *transferTask = dynamic_cast<TransferTask *>(pTmpTask);
+						transferTask->SetTaskDevId(taskDev->taskDevId);
+						AGHelper::AddTaskToTL(pTmpTask);
+						pTmpTask->ExcuteTask();
+					}
+					break;
+				case CancelDistribute:
+				case CancelTransfer:
+					{
+						pTmpTask->ExcuteTask();
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			catch(...)
+			{
+				OUTERRORLOG("ACDGateway service run thread occur exception.");
+			}
+		}
+	}
 
 }
 
@@ -125,20 +187,21 @@ void AGService::StratMonitorDevice()
 	}
 }
 
-
-void AGService::Maintenance()
+void AGService::AddTaskToTL(AGTask *agTask)
 {
+	if (agTask == NULL)
+	{
+		return;
+	}
+
+	IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(tlMutex);
+	taskList.push(agTask);
+	if (taskList.size() == 1)
+	{
+		tlMutex.notify();
+	}
 
 }
-
-
-
-
-void AGService::SetAutoRunAsOSStartup(bool p_start)
-{
-
-}
-
 
 
 
@@ -147,92 +210,19 @@ HICON AGService::LoadAppIcon()
 	return LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_APP));
 }
 
-
-
-
 HICON AGService::LoadStartIcon()
 {
 	return LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_START));
 }
-
-
-
 
 HICON AGService::LoadPauseIcon()
 {
 	return LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_PAUSE));
 }
 
-
-
-
 HICON AGService::LoadStopIcon()
 {
 	return LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_STOP));
-}
-
-
-
-
-void AGService::OnRunType(ServiceCommands_t p_type)
-{
-	if ( p_type == SvcCmdTray )
-	{
-	}
-}
-
-
-
-
-void AGService::CreateConfigWin(HINSTANCE p_hInstance, HWND p_hWnd)
-{
-// 	DialogBox(hInstance,
-// 			 MAKEINTRESOURCE(IDD_CFGWIN),
-// 			 p_hWnd,
-// 			 StaticCfgWndProc);
-}
-
-INT_PTR CALLBACK AGService::StaticCfgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	bool								bAuto = false;
-	char								szWinText[MAX_PATH];
-
-
-	switch ( msg )
-	{
-	case WM_INITDIALOG:
-		MoveWindow(hWnd, 300, 200, 425, 350, TRUE);
-		return TRUE;
-
-	case WM_CLOSE:
-		break;
-
-	case WM_DRAWITEM: 
-		return TRUE;
-
-	case WM_COMMAND:
-		switch ( wParam )
-		{
-		case IDOK:
-			EndDialog(hWnd, IDOK);
-			return TRUE;
-
-		case IDCANCEL:
-			EndDialog(hWnd, IDCANCEL);
-			return TRUE;
-		}
-		switch( HIWORD(wParam) )
-		{
-		case BN_CLICKED:
-			UINT								flag;
-			return TRUE;
-
-		default:
-			return FALSE;
-		}
-		break;
-	}
-	return FALSE;
 }
 
 FDECLARE_MAINFRAME(AGService,

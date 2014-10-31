@@ -1,5 +1,6 @@
 #include "AGHttpServer.h"
-
+#include "AGService.h"
+#include "AGUtil.h"
 
 std::string ParseHttpMessage(std::string id, std::string gap,std::string &result)
 {
@@ -80,24 +81,92 @@ void HttpReqCallback(struct evhttp_request *req, void *arg)
 		if (( pos = result.find("/DistributeMultimediaCall.html") ) != std::string::npos )
 		{
 
+
+
 			std::string mediaId = ParseHttpMessage("Id=","&",result);
 			std::string meidaType = ParseHttpMessage("Mediatype=","&",result);;
 			std::string bussType = ParseHttpMessage("Businesstype=","&",result);
 			std::string custlevel = ParseHttpMessage("Customlevel=","&",result);
+
+			std::string dialNo = AGHelper::FindDialNoByBusiness(bussType);
+
+			if (dialNo.size() == 0)
+			{
+				return;//or return mir
+			}
+			if (AGHelper::IsExistTask(mediaId, Distribute))
+			{
+				return;//or return mir
+			}
+
+			DistributeAgentTask *disTask = new DistributeAgentTask(mediaId,
+																   meidaType,
+																   bussType,
+																   custlevel,
+																   dialNo);
+			if (disTask)
+			{
+				if (gAGService != NULL)
+				{
+					gAGService->AddTaskToTL(disTask);
+				}
+			}
+				
 		}
 		else if(( pos = result.find("/CancelDistributeMultimediaCall.html") ) != std::string::npos )
 		{
 			std::string cancelMedId = ParseHttpMessage("Id=","&",result);
+			if (AGHelper::IsExistTask(cancelMedId, CancelDistribute))
+			{
+				return;//or return mir
+			}
+
+			CancelDisAgtTask *cdaTask = new CancelDisAgtTask(cancelMedId);
+
+			if (cdaTask)
+			{
+				if (gAGService != NULL)
+				{
+					gAGService->AddTaskToTL(cdaTask);
+				}
+			}
+
 		}
 		else if(( pos = result.find("/Transfer.html") ) != std::string::npos )
 		{
 			std::string transMedId = ParseHttpMessage("Id=","&",result);
 			std::string srcId = ParseHttpMessage("Srcagentid=","&",result);
-			std::string destId = ParseHttpMessage("Destinationagentid=","&",result);	
+			std::string destId = ParseHttpMessage("Destinationagentid=","&",result);
+			if (AGHelper::IsExistTask(transMedId, Transer))
+			{
+				return;//or return mir
+			}
+
+			TransferTask *ttask = new TransferTask(transMedId, srcId, destId);
+			if (ttask)
+			{
+				if (gAGService != NULL)
+				{
+					gAGService->AddTaskToTL(ttask);
+				}
+			}
 		}
 		else if(( pos = result.find("/CancelTransfer.html") ) != std::string::npos )
 		{
 			std::string canTransId = ParseHttpMessage("Id=","&",result);
+			if (AGHelper::IsExistTask(canTransId, CancelTransfer))
+			{
+				return;//or return mir
+			}
+
+			CancelTransferTask *cttask = new CancelTransferTask(canTransId);
+			if (cttask)
+			{
+				if (gAGService != NULL)
+				{
+					gAGService->AddTaskToTL(cttask);
+				}
+			}
 		}
 		else
 		{
@@ -126,40 +195,48 @@ int AGHttpServer::InitWinSocket()
 
 void AGHttpServer::run()
 {
-	int ret = InitWinSocket();
-	if (ret != 0)
+	try
 	{
-		OUTERRORLOG("AGHttpServer thread run initialize win socket occur error.");
-		return;
+		int ret = InitWinSocket();
+		if (ret != 0)
+		{
+			OUTERRORLOG("AGHttpServer thread run initialize win socket occur error.");
+			return;
+		}
+
+		struct event_base * base = event_base_new();
+		if (!base)
+		{
+			OUTERRORLOG("AGHttpServer thread run event_base_new occur error.");
+			return;
+		}
+
+		http_server = evhttp_new(base);
+		if (!http_server)
+		{
+			OUTERRORLOG("AGHttpServer thread run evhttp_new occur error.");
+			return;
+		}
+		evhttp_set_gencb(http_server, HttpReqCallback, NULL);
+
+		ret = evhttp_bind_socket(http_server,addr.c_str(),port);
+
+		if (ret != 0)
+		{
+			OUTERRORLOG("AGHttpServer thread run evhttp_bind_socket occur error.");
+			return;
+		}
+
+		OUTERRORLOG("AGHttpServer thread run start successed.");
+		event_base_dispatch(base);
+		evhttp_free(http_server);
+		WSACleanup();
+	}
+	catch(...)
+	{
+		OUTERRORLOG("AGHttpServer thread run occur exception.");
 	}
 
-	struct event_base * base = event_base_new();
-	if (!base)
-	{
-		OUTERRORLOG("AGHttpServer thread run event_base_new occur error.");
-		return;
-	}
-
-	http_server = evhttp_new(base);
-	if (!http_server)
-	{
-		OUTERRORLOG("AGHttpServer thread run evhttp_new occur error.");
-		return;
-	}
-	evhttp_set_gencb(http_server, HttpReqCallback, NULL);
-
-	ret = evhttp_bind_socket(http_server,addr.c_str(),port);
-
-	if (ret != 0)
-	{
-		OUTERRORLOG("AGHttpServer thread run evhttp_bind_socket occur error.");
-		return;
-	}
-
-	OUTERRORLOG("AGHttpServer thread run start successed.");
-	event_base_dispatch(base);
-	evhttp_free(http_server);
-	WSACleanup();
 }
 
 void AGHttpServer::SendResponse(std::string clientIdent, std::string result)

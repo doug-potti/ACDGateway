@@ -69,6 +69,7 @@
     <ClCompile Include="AGHttpServer.cpp" />
     <ClCompile Include="AGLogHelper.cpp" />
     <ClCompile Include="AGMain.cpp" />
+    <ClCompile Include="AGTask.cpp" />
     <ClCompile Include="CstaCommand.cpp" />
     <ClCompile Include="CstaErrorDesc.cpp" />
     <ClCompile Include="CstaEventProcess.cpp" />
@@ -81,6 +82,7 @@
     <ClInclude Include="AGHttpServer.h" />
     <ClInclude Include="AGLogHelper.h" />
     <ClInclude Include="AGService.h" />
+    <ClInclude Include="AGTask.h" />
     <ClInclude Include="AGUtil.h" />
     <ClInclude Include="CstaCommand.h" />
     <ClInclude Include="CstaErrorDesc.h" />

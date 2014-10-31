@@ -9,6 +9,8 @@
 #include "attpriv.h"
 #include "csta.h"
 #include "AGLogHelper.h"
+#include "AGTask.h"
+
 
 #define OUTTRACELOG(logmsg) \
 	if(gLogHelper != NULL)\
@@ -142,9 +144,26 @@ struct AcdgwCfg_t
 	}
 };
 
+struct TaskDev_t
+{
+	std::string taskDevId;
+	bool        isIdle;
+	long        monitorRefId;
+
+	TaskDev_t(std::string devId, long refId)
+	{
+		taskDevId = devId;
+		isIdle = true;
+		monitorRefId = refId;
+	}
+};
+
 
 typedef std::vector<Dev_t *>  DEVLIST;
 typedef std::map<long, Dev_t*> MONDEVMAP;
+typedef std::map<std::string, std::string> DIALMAP;
+typedef std::vector<TaskDev_t *> TASKDEVLIST;
+typedef std::vector<AGTask *> TASKLIST;
 class AGHelper
 {
 public:
@@ -160,6 +179,15 @@ public:
 	static Dev_t*        FindDevByRefId(long refId);
 	static void          RemoveMonDevByRefId(long refId);
 
+	static void          AddDialMapToDM(std::string business, std::string dialNo);
+	static std::string   FindDialNoByBusiness(std::string business);
+
+	static void          AddTaskDevToTDL(TaskDev_t *taskDev);
+	static TaskDev_t*    FindIdleTaskDev();
+	static void          SetIdleTaskDev(std::string devId);
+
+	static void          AddTaskToTL(AGTask *agTask);
+	static bool          IsExistTask(std::string taskId, EnTaskType taskType);
 private:
 	static std::string   ConvertULToString(unsigned long ulInput);
 public:
@@ -169,6 +197,15 @@ private:
 
 	static MONDEVMAP     monDevMap;
 	static ICERECMUTEX   mdmMutex;
+
+	static DIALMAP       dialMap;
+
+	static TASKDEVLIST   taskDevList;
+	static ICERECMUTEX   tdlMutex;
+
+	static TASKLIST       taskList;
+	static ICERECMUTEX   tlMutex;
+
 };
 
 #endif

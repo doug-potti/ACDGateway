@@ -21,6 +21,7 @@ public:
 	~DBHelper();
 
 	bool GetDevFromDB();
+	bool GetBusDialMap();
 private:
 	int  GetFieldType(int index);
 	bool ExeSelectSQL(char* sqltext);

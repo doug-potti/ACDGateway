@@ -1,10 +1,16 @@
 
 #include "AGUtil.h"
+#include "AGService.h"
 
 AcdgwCfg_t                                AGHelper::sAcdgwCfg;
 DEVLIST                                   AGHelper::sDevList;
 MONDEVMAP                                 AGHelper::monDevMap;
 ICERECMUTEX                               AGHelper::mdmMutex;
+DIALMAP                                   AGHelper::dialMap;
+TASKDEVLIST                               AGHelper::taskDevList;
+ICERECMUTEX                               AGHelper::tdlMutex;
+TASKLIST                                  AGHelper::taskList;
+ICERECMUTEX                               AGHelper::tlMutex;
 
 std::string AGHelper::ConvertTaspiCmdToString(EnTsapiCmdType cmdType)
 {
@@ -122,4 +128,82 @@ void AGHelper::RemoveMonDevByRefId(long refId)
 		monDevMap.erase(findIter);
 	}
 }
+
+void AGHelper::AddDialMapToDM(std::string business, std::string dialNo)
+{
+	dialMap.insert(std::pair<std::string, std::string>(business, dialNo));
+}
+
+std::string AGHelper::FindDialNoByBusiness(std::string business)
+{
+	DIALMAP::iterator findIter = dialMap.find(business);
+	if (findIter != dialMap.end())
+	{
+		return (*findIter).second;
+	}
+
+	return "";
+}
+
+void AGHelper::AddTaskDevToTDL(TaskDev_t *taskDev)
+{
+	ICERECMUTEX::Lock lock(tdlMutex);
+	taskDevList.push_back(taskDev);
+}
+
+TaskDev_t *AGHelper::FindIdleTaskDev()
+{
+	ICERECMUTEX::Lock lock(tdlMutex);
+	TASKDEVLIST::iterator iter = taskDevList.begin();
+	for (; iter != taskDevList.end(); ++iter)
+	{
+		if ((*iter)->isIdle)
+		{
+			(*iter)->isIdle = false;
+
+			return *iter;
+		}
+	}
+	return NULL;
+}
+
+void AGHelper::SetIdleTaskDev(std::string devId)
+{
+	ICERECMUTEX::Lock lock(tdlMutex);
+	TASKDEVLIST::iterator iter = taskDevList.begin();
+	for (; iter != taskDevList.end(); ++iter)
+	{
+		if ((*iter)->taskDevId == devId && !((*iter)->isIdle))
+		{
+			(*iter)->isIdle = true;
+			if (gAGService != NULL)
+			{
+				gAGService->SetIdleDevHandle();
+			}
+		}
+	}
+}
+
+void AGHelper::AddTaskToTL(AGTask *agTask)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	taskList.push_back(agTask);
+}
+
+bool AGHelper::IsExistTask(std::string taskId, EnTaskType taskType)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if (((*iter)->GetTaskId() == taskId) &&
+			((*iter)->GetTaskType() == taskType))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 

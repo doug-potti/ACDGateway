@@ -267,10 +267,8 @@ bool DBHelper::Eof()
 
 bool DBHelper::GetDevFromDB()
 {
-	char								connstr[640];
 	std::string                         conStr;
 	std::string							tmpFiled;
-	memset(connstr, 0, 640);
 	if("MSSQL" == AGHelper::sAcdgwCfg.dbType)
 	{
 		conStr.append("Provider=SQLOLEDB.1;Password=");
@@ -283,59 +281,133 @@ bool DBHelper::GetDevFromDB()
 		conStr.append(AGHelper::sAcdgwCfg.dbIp);
 	}
 
-	bool ret = ConnectDB(conStr.c_str());
-	if (ret)
+	try
 	{
-		char								strSql[640];
-		_variant_t							tmp;
-		memset(strSql, 0, 640);
-		strcpy(strSql, "select * from v_DevList");
-		ret = ExeSelectSQL(strSql);
-		int recordcnt = GetRecordCount();
-		if ( ret )
+		bool ret = ConnectDB(conStr.c_str());
+		if (ret)
 		{
-			MoveFirstRecord();
-		}
-
-		if ("MSSQL" == AGHelper::sAcdgwCfg.dbType)
-		{
-			int fieldcnt = GetFieldCount();
-			for ( int i = 0; i < recordcnt; ++i )
+			char								strSql[640];
+			_variant_t							tmp;
+			memset(strSql, 0, 640);
+			strcpy(strSql, "select * from v_ACDGatewayDevList");
+			ret = ExeSelectSQL(strSql);
+			int recordcnt = GetRecordCount();
+			if ( ret )
 			{
-				Dev_t * newDev = new Dev_t();
-				ret = GetFieldVlaue(0, &tmp);
-				tmpFiled = _bstr_t(tmp);
-				newDev->devId = tmpFiled;
-				ret = GetFieldVlaue(1, &tmp);
-				tmpFiled = _bstr_t(tmp);
-				if ("0" == tmpFiled)
-				{
-					newDev->devType = Device;
-				}
-				else if ("1" == tmpFiled)
-				{
-					newDev->devType = Vdn;
-				}
-				else
-				{
-					newDev->devType = Split;
-				}
-				AGHelper::sDevList.push_back(newDev);
-				( i < recordcnt ) ? MoveNextRecord() : 0;
+				MoveFirstRecord();
 			}
 
-			
-		}
-		DisConnectDB();
-		return true;
-	}
-	
-	std::stringstream ssLog("");
-	ssLog<<"DBHelper GetDevFromDB occur error errCode:"<<
-		   m_errCode<<" errMsg:"<<
-		   m_errMsg<<std::endl;
+			if ("MSSQL" == AGHelper::sAcdgwCfg.dbType)
+			{
+				int fieldcnt = GetFieldCount();
+				for ( int i = 0; i < recordcnt; ++i )
+				{
+					Dev_t * newDev = new Dev_t();
+					ret = GetFieldVlaue(0, &tmp);
+					tmpFiled = _bstr_t(tmp);
+					newDev->devId = tmpFiled;
+					ret = GetFieldVlaue(1, &tmp);
+					tmpFiled = _bstr_t(tmp);
+					if ("0" == tmpFiled)
+					{
+						newDev->devType = Device;
+					}
+					else if ("1" == tmpFiled)
+					{
+						newDev->devType = Vdn;
+					}
+					else
+					{
+						newDev->devType = Split;
+					}
+					AGHelper::sDevList.push_back(newDev);
+					( i < recordcnt ) ? MoveNextRecord() : 0;
+				}
 
-	OUTERRORLOG(ssLog.str());
-	ssLog.str("");
+
+			}
+			DisConnectDB();
+			return true;
+		}
+	}
+	catch(...)
+	{
+		std::stringstream ssLog("");
+		ssLog<<"DBHelper GetDevFromDB occur error errCode:"<<
+			m_errCode<<" errMsg:"<<
+			m_errMsg<<std::endl;
+
+		OUTERRORLOG(ssLog.str());
+		ssLog.str("");
+		return false;
+	}
+	return false;
+}
+
+bool DBHelper::GetBusDialMap()
+{
+	std::string                         conStr;
+	std::string							tmpFiled;
+	if("MSSQL" == AGHelper::sAcdgwCfg.dbType)
+	{
+		conStr.append("Provider=SQLOLEDB.1;Password=");
+		conStr.append(AGHelper::sAcdgwCfg.dbPasswnd);
+		conStr.append(";Persist Security Info=False;User ID=");
+		conStr.append(AGHelper::sAcdgwCfg.dbUser);
+		conStr.append(";Initial Catalog=");
+		conStr.append(AGHelper::sAcdgwCfg.dbName);
+		conStr.append(";Data Source=");
+		conStr.append(AGHelper::sAcdgwCfg.dbIp);
+	}
+
+	try
+	{
+		bool ret = ConnectDB(conStr.c_str());
+		if (ret)
+		{
+			char								strSql[640];
+			_variant_t							tmp;
+			memset(strSql, 0, 640);
+			strcpy(strSql, "select * from v_ACDGatewayGetDialMap");
+			ret = ExeSelectSQL(strSql);
+			int recordcnt = GetRecordCount();
+			if ( ret )
+			{
+				MoveFirstRecord();
+			}
+
+			if ("MSSQL" == AGHelper::sAcdgwCfg.dbType)
+			{
+				int fieldcnt = GetFieldCount();
+				for ( int i = 0; i < recordcnt; ++i )
+				{
+					ret = GetFieldVlaue(0, &tmp);
+					tmpFiled = _bstr_t(tmp);
+					std::string business = tmpFiled;
+					ret = GetFieldVlaue(1, &tmp);
+					tmpFiled = _bstr_t(tmp);
+					std::string dialNo = tmpFiled;
+					AGHelper::AddDialMapToDM(business, dialNo);
+					( i < recordcnt ) ? MoveNextRecord() : 0;
+				}
+			}
+			DisConnectDB();
+			return true;
+		}
+	}
+	catch(...)
+	{
+		std::stringstream ssLog("");
+		ssLog<<"DBHelper GetBusDialMap occur error errCode:"<<
+			m_errCode<<" errMsg:"<<
+			m_errMsg<<std::endl;
+
+		OUTERRORLOG(ssLog.str());
+		ssLog.str("");
+		return false;
+	}
+
+
+
 	return false;
 }

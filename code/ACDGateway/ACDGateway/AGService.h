@@ -1,8 +1,15 @@
 #ifndef ACDGW_SERVICE_H
 #define ACDGW_SERVICE_H
 
+#include <queue>
 #include "svcproc.hpp"
+#include "AGTask.h"
+#include <IceUtil/IceUtil.h>
 
+typedef std::queue<AGTask *> AGTASKLIST;
+
+class AGService;
+extern AGService *gAGService;
 class AGService:public ServiceProcess_c
 {
 public:
@@ -16,28 +23,39 @@ public:
 			  const char * svc_name)
 		: ServiceProcess_c(majorVersion, minorVersion, manuf, prod_desp, prod_name, svc_desp, svc_name)
 	{
-
+		isDone = false;
+		gAGService = this;
+		waitIdleDevHandle = CreateEvent(NULL,FALSE,FALSE,NULL);
 	}
 	~AGService(){}
 
 	void Main();
-	void Maintenance();
+	void Maintenance(){}
 	BOOL OnStart();
 	void OnStop();
-
 	void OnBeforeStart();
-	void SetAutoRunAsOSStartup(bool p_start);
+	void SetAutoRunAsOSStartup(bool p_start){}
 	HICON LoadAppIcon();
 	HICON LoadStartIcon();
 	HICON LoadPauseIcon();
 	HICON LoadStopIcon();
-	void OnRunType(ServiceCommands_t p_type);
-	void CreateConfigWin(HINSTANCE p_hInstance, HWND p_hWnd);
-	static INT_PTR CALLBACK StaticCfgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK StaticTSvrLstWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void OnRunType(ServiceCommands_t p_type){}
+	void CreateConfigWin(HINSTANCE p_hInstance, HWND p_hWnd){}
 
+	void AddTaskToTL(AGTask *agTask);
+
+	void SetIdleDevHandle()
+	{
+		SetEvent(waitIdleDevHandle);
+	}
 private:
-	void StratMonitorDevice();  
+	void StratMonitorDevice(); 
+	
+private:
+	AGTASKLIST                           taskList;
+	IceUtil::Monitor<IceUtil::RecMutex>  tlMutex;
+	bool                                 isDone;
+	HANDLE                               waitIdleDevHandle;
 };
 
 const unsigned int ACDGW_MAJOR_VERSION						= 1;

@@ -84,15 +84,15 @@
     <ClCompile Include="svrproc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\commpipe.h" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\contain.h" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\finesyslog.hpp" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\splog.hpp" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\sp_resource.h" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\storagemanager.hpp" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\svcproc.hpp" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\thread_cs.hpp" />
-    <ClInclude Include="..\..\..\..\headers\ServiceFrame\thread_guard.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\commpipe.h" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\contain.h" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\finesyslog.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\splog.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\sp_resource.h" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\storagemanager.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\svcproc.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\thread_cs.hpp" />
+    <ClInclude Include="..\..\..\headers\ServiceFrame\thread_guard.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -173,9 +173,16 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 				{
 					(*iter)->monRefId = refid;
 					AGHelper::AddMonDevToMDM(refid, (*iter));
+					if ((*iter)->devType == Device)
+					{
+						TaskDev_t *newTaskDev = new TaskDev_t(devId,refid);
+						if (newTaskDev)
+						{
+							AGHelper::AddTaskDevToTDL(newTaskDev);
+						}		
+					}
 				}
 			}
-
 		}
 		break;
 	case CSTA_SET_AGENT_STATE_CONF:
