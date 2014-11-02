@@ -1,6 +1,9 @@
+
 #include "AGHttpServer.h"
 #include "AGService.h"
-#include "AGUtil.h"
+
+
+
 
 std::string ParseHttpMessage(std::string id, std::string gap,std::string &result)
 {
@@ -80,30 +83,25 @@ void HttpReqCallback(struct evhttp_request *req, void *arg)
 		size_t pos;
 		if (( pos = result.find("/DistributeMultimediaCall.html") ) != std::string::npos )
 		{
-
-
-
 			std::string mediaId = ParseHttpMessage("Id=","&",result);
 			std::string meidaType = ParseHttpMessage("Mediatype=","&",result);;
 			std::string bussType = ParseHttpMessage("Businesstype=","&",result);
 			std::string custlevel = ParseHttpMessage("Customlevel=","&",result);
 
-			std::string dialNo = AGHelper::FindDialNoByBusiness(bussType);
-
-			if (dialNo.size() == 0)
-			{
-				return;//or return mir
-			}
 			if (AGHelper::IsExistTask(mediaId, Distribute))
 			{
+				if(gAGHttpServer != NULL)
+				{
+					gAGHttpServer->SendResponseWithReq(req, 
+													   gAGHttpServer->ConstructFailDesc(mediaId,"TaskExist"));
+				}
 				return;//or return mir
 			}
-
+			gAGHttpServer->AddHttpClientToHCM(mediaId, req);
 			DistributeAgentTask *disTask = new DistributeAgentTask(mediaId,
 																   meidaType,
 																   bussType,
-																   custlevel,
-																   dialNo);
+																   custlevel);
 			if (disTask)
 			{
 				if (gAGService != NULL)
@@ -118,9 +116,14 @@ void HttpReqCallback(struct evhttp_request *req, void *arg)
 			std::string cancelMedId = ParseHttpMessage("Id=","&",result);
 			if (AGHelper::IsExistTask(cancelMedId, CancelDistribute))
 			{
+				if(gAGHttpServer != NULL)
+				{
+					gAGHttpServer->SendResponseWithReq(req, 
+						                               gAGHttpServer->ConstructFailDesc(cancelMedId,"TaskExist"));
+				}
 				return;//or return mir
 			}
-
+			gAGHttpServer->AddHttpClientToHCM(cancelMedId, req);
 			CancelDisAgtTask *cdaTask = new CancelDisAgtTask(cancelMedId);
 
 			if (cdaTask)
@@ -139,9 +142,14 @@ void HttpReqCallback(struct evhttp_request *req, void *arg)
 			std::string destId = ParseHttpMessage("Destinationagentid=","&",result);
 			if (AGHelper::IsExistTask(transMedId, Transer))
 			{
+				if(gAGHttpServer != NULL)
+				{
+					gAGHttpServer->SendResponseWithReq(req, 
+						gAGHttpServer->ConstructFailDesc(transMedId,"TaskExist"));
+				}
 				return;//or return mir
 			}
-
+			gAGHttpServer->AddHttpClientToHCM(transMedId, req);
 			TransferTask *ttask = new TransferTask(transMedId, srcId, destId);
 			if (ttask)
 			{
@@ -156,9 +164,14 @@ void HttpReqCallback(struct evhttp_request *req, void *arg)
 			std::string canTransId = ParseHttpMessage("Id=","&",result);
 			if (AGHelper::IsExistTask(canTransId, CancelTransfer))
 			{
+				if(gAGHttpServer != NULL)
+				{
+					gAGHttpServer->SendResponseWithReq(req, 
+						gAGHttpServer->ConstructFailDesc(canTransId,"TaskExist"));
+				}
 				return;//or return mir
 			}
-
+			gAGHttpServer->AddHttpClientToHCM(canTransId, req);
 			CancelTransferTask *cttask = new CancelTransferTask(canTransId);
 			if (cttask)
 			{
@@ -239,6 +252,72 @@ void AGHttpServer::run()
 
 }
 
+void AGHttpServer::AddHttpClientToHCM(std::string clientId, struct evhttp_request * req)
+{
+	ICERECMUTEX::Lock lock(cmMutex);
+	clientMap.insert(std::pair<std::string, struct evhttp_request *>(clientId, req));
+}
+
+void AGHttpServer::SendResponseWithReq(struct evhttp_request *req, std::string response)
+{
+	std::stringstream sslog("");
+	sslog<<"AGHttpServer.SendResponseWithReq  response:"<<
+			response<<std::endl;
+	OUTDEBUGLOG(sslog.str());
+	sslog.str("");
+	struct evbuffer *buf = evbuffer_new();
+	if(!buf)
+	{
+		sslog<<"AGHttpServer.SendResponseWithReq evbuffer_new occur error response:"<<
+				response<<std::endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+		return;
+	}
+
+	try
+	{
+		evbuffer_add_printf(buf, response.c_str(), evhttp_request_get_uri(req));
+		evhttp_send_reply(req, HTTP_OK, "OK", buf);
+		evbuffer_free(buf);
+	}
+	catch(...)
+	{
+		sslog<<"AGHttpServer.SendResponseWithReq evhttp_send_reply occur error response::"<<
+				response<<std::endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+	}
+
+}
+
+std::string AGHttpServer::ConstructFailDesc(std::string mediaId, std::string failDesc)
+{
+	std::string result("{\"Id\":\"");
+	result.append(mediaId);
+	result.append("\,\"result\":\"fail\",\"errorMsg\":");
+	result.append(failDesc);
+	result.append("\"}");
+	return result;
+}
+
+std::string AGHttpServer::ConstructDisAgtSuc(std::string mediaId, std::string agentId)
+{
+	std::string result("{\"Id\":\"");
+	result.append(mediaId);
+	result.append("\,\"result\":\"suc\",\"agent\":");
+	result.append(agentId);
+	result.append("\"}");
+	return result;
+}
+
+std::string AGHttpServer::ConstructCanDASuc(std::string mediaId)
+{
+	std::string result("{\"Id\":\"");
+	result.append(mediaId);
+	result.append("\,\"result\":\"suc\"}");
+	return result;
+}
 void AGHttpServer::SendResponse(std::string clientIdent, std::string result)
 {
 	std::stringstream sslog("");
@@ -258,9 +337,15 @@ void AGHttpServer::SendResponse(std::string clientIdent, std::string result)
 	}
 	try
 	{
-// 		evbuffer_add_printf(buf, "Server Responsed. Requested: finetel", evhttp_request_get_uri(req));
-// 		evhttp_send_reply(req, HTTP_OK, "OK", buf);
-// 		evbuffer_free(buf);
+		ICERECMUTEX::Lock lock(cmMutex);
+		HTTPCLIENTMAP::iterator findIter = clientMap.find(clientIdent);
+		if (findIter != clientMap.end())
+		{
+			evbuffer_add_printf(buf, result.c_str(), evhttp_request_get_uri((*findIter).second));
+			evhttp_send_reply((*findIter).second, HTTP_OK, "OK", buf);
+			evbuffer_free(buf);
+			clientMap.erase(findIter);
+		}
 	}
 	catch(...)
 	{

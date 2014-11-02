@@ -1,7 +1,10 @@
+#include "AGHttpServer.h"
 #include "CstaEventProcess.h"
 #include "CstaErrorDesc.h"
 #include "MonitorThread.h"
 #include "CstaReconnect.h"
+#include "CstaCommand.h"
+//
 
 CstaEventProcessPtr gCstaEventProcessThd;
 
@@ -245,12 +248,57 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_CONNECTION_CLEARED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			if (agTask != NULL)
+			{
+				if (agTask->GetTaskDevId() == pCstaUnse->u.connectionCleared.releasingDevice.deviceID)
+				{
+					std::string taskId = "";
+					if (agTask->GetTaskType() == Distribute)
+					{
+						taskId = agTask->GetTaskId();
+						AGHelper::RemoveTaskByRefId(refId);
+						AGHelper::SetIdleTaskDev(pCstaUnse->u.connectionCleared.releasingDevice.deviceID);
+					}
+					agTask = AGHelper::FindTaskByTaskId(taskId);
+					if (agTask != NULL && agTask->GetTaskType() == CancelDistribute)
+					{
+						if (gAGHttpServer != NULL)
+						{
+							gAGHttpServer->SendResponse(agTask->GetTaskId(),
+														gAGHttpServer->ConstructCanDASuc(agTask->GetTaskId()));
+						}
+						AGHelper::RemoveTaskByTaskId(taskId);
+					}
+
+				}
+			}
 		}
 		break;
 	case CSTA_DELIVERED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			if (agTask != NULL)
+			{
+				std::string deliverId = pCstaUnse->u.delivered.alertingDevice.deviceID;
+				if (!deliverId.empty())
+				{
+					std::string agentId = AGHelper::FindAgentIdByTerId(deliverId);
+					if (agentId != "NOFIND")
+					{
+						if (gAGHttpServer != NULL)
+						{
+						
+							gAGHttpServer->SendResponse(agTask->GetTaskId(),
+														gAGHttpServer->ConstructDisAgtSuc(agTask->GetTaskId(),
+																						  agentId));
+						}
+					}
+				}
+
+			}
 		}
 		break;
 	case CSTA_DIVERTED:
@@ -265,7 +313,29 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_FAILED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			if (agTask != NULL)
+			{
+				TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+				pNewCmd->activeDevId = agTask->GetTaskDevId();
+				pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
+				pNewCmd->tsapiCmdType = Release;
+				pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, Release);
+				if (gCstaCmdThread != NULL)
+				{
+					gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+				}
+
+				//返回失败
+				if (gAGHttpServer != NULL)
+				{
+
+					gAGHttpServer->SendResponse(agTask->GetTaskId(),
+						                        gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+				}
+
+			}
 		}
 		break;
 	case CSTA_HELD:
@@ -305,7 +375,13 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_QUEUED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			if (agTask != NULL)
+			{
+				//排队怎么样处理
+
+			}
 		}
 		break;
 	case CSTA_RETRIEVED:
@@ -315,7 +391,12 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_SERVICE_INITIATED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			if (agTask != NULL)
+			{
+				agTask->SetTaskCallId(pCstaUnse->u.serviceInitiated.initiatedConnection.callID);
+			}
 		}
 		break;
 	case CSTA_TRANSFERRED:
@@ -327,13 +408,13 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		{
 			std::string devId = pCstaUnse->u.loggedOn.agentDevice.deviceID;
 			std::string agentId = pCstaUnse->u.loggedOn.agentID;
-			//wait process
+			AGHelper::AddTerAgtToLM(devId, agentId);
 		}
 		break;
 	case CSTA_LOGGED_OFF:
 		{
 			std::string devId = pCstaUnse->u.loggedOff.agentDevice.deviceID;
-			//wait process
+			AGHelper::RemoveTerAgtFromLM(devId);
 		}
 		break;
 	default:

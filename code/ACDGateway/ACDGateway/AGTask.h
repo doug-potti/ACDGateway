@@ -2,6 +2,7 @@
 #define ACDGW_TASK_H
 
 #include <string>
+
 enum EnTaskType
 {
 	Distribute,
@@ -13,8 +14,9 @@ class  AGTask
 {
 public:
 	AGTask(){}
-	AGTask(std::string taskid,EnTaskType tskType):taskId(taskid),taskType(tskType)
+	AGTask(std::string taskid,EnTaskType tskType):taskId(taskid),taskType(tskType),taskCallId(-1),monRefId(-1)
 	{
+
 	}
 	virtual ~AGTask(){}
 	virtual void ExcuteTask() = 0;
@@ -28,24 +30,10 @@ public:
 		return taskType;
 	}
 
-protected:
-	EnTaskType  taskType;
-	std::string taskId;
-
-};
-
-class DistributeAgentTask:public AGTask
-{
-public:
-	DistributeAgentTask(std::string tskId,
-		                std::string medType,
-						std::string busType,
-						std::string custLevel,
-						std::string dlNo):AGTask(tskId,Distribute),mediaType(medType),businessType(busType), 
-						                    customerLevel(custLevel),dialNo(dlNo)
-	{}
-	~DistributeAgentTask(){}
-	void ExcuteTask();
+	void SetRefId(long taskRefId)
+	{
+		monRefId = taskRefId;
+	}
 
 	void SetTaskDevId(std::string devId)
 	{
@@ -57,15 +45,66 @@ public:
 		taskCallId = callId;
 	}
 
+	std::string GetTaskDevId()
+	{
+		return taskDevId;
+	}
+
+	long GetTaskRefId()
+	{
+		return monRefId;
+	}
+
+	long GetTaskCallId()
+	{
+		return taskCallId;
+	}
+
+protected:
+	EnTaskType  taskType;
+	std::string taskId;
+	long        monRefId;
+	long        taskCallId;
+	std::string taskDevId;
+};
+
+class DistributeAgentTask:public AGTask
+{
+public:
+	DistributeAgentTask(std::string tskId,
+		                std::string medType,
+						std::string busType,
+						std::string custLevel):AGTask(tskId,Distribute),mediaType(medType),businessType(busType), 
+						                    customerLevel(custLevel)
+	{}
+	~DistributeAgentTask(){}
+	void ExcuteTask();
+
+	void SetTaskDevId(std::string devId)
+	{
+		taskDevId = devId;
+	}
+
+	void SetDialNo(std::string dialno)
+	{
+		dialNo = dialno;
+	}
+
 	std::string GetDialNo()
 	{
 		return dialNo;
 	}
 
-	std::string GetTaskDevId()
+	std::string GetBusType()
 	{
-		return taskDevId;
+		return businessType;
 	}
+
+	std::string GetCustLvl()
+	{
+		return customerLevel;
+	}
+	
 private:
 	std::string GetUui()
 	{
@@ -77,8 +116,6 @@ private:
 	std::string businessType;
 	std::string customerLevel;
 	std::string dialNo;
-	std::string taskDevId;
-	long        taskCallId;
 };
 
 class CancelDisAgtTask:public AGTask
@@ -103,24 +140,11 @@ public:
 	}
 	~TransferTask(){}
 	void ExcuteTask();
-	void SetTaskDevId(std::string devId)
-	{
-		taskDevId = devId;
-	}
 
-	void SetTaskCallId(long callId)
-	{
-		taskCallId = callId;
-	}
 
 	std::string GetDestNo()
 	{
 		return destId;
-	}
-
-	std::string GetTaskDevId()
-	{
-		return taskDevId;
 	}
 private:
 	std::string GetUui()
@@ -130,8 +154,6 @@ private:
 private:
 	std::string sourceId;
 	std::string destId;
-	std::string taskDevId;
-	long        taskCallId;
 
 };
 

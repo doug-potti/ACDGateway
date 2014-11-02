@@ -13,6 +13,7 @@ namespace AGMIR
 {
     public partial class mainForm : Form
     {
+        
         public string AGUrl
         {
             get
@@ -25,6 +26,7 @@ namespace AGMIR
         public mainForm()
         {
             InitializeComponent();
+
         }
 
         private void btnDis_Click(object sender, EventArgs e)
@@ -36,23 +38,26 @@ namespace AGMIR
             {
                 return;
             }
-            WebClient wc = new WebClient();
+            
             Uri uri = new Uri(string.Format("{0}?Id={1}&Mediatype={2}&Businesstype={3}&Customlevel={4}",
                                              AGUrl,
                                              txtReqId.Text,
                                              txtMediaType.Text,
                                              txtBusType.Text,
                                              txtCustLv.Text), UriKind.RelativeOrAbsolute);
-            wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
 
+            WebClient wc = new WebClient();
+            wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
             wc.OpenReadAsync(uri);
         }
 
         void wc_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
         {
-            //
+            StreamReader read = new StreamReader(e.Result);
+            string result = read.ReadToEnd();
+            rtInfo.Text = rtInfo.Text + result + "\n";
         }
-
+        
         private void button1_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtReqId.Text))

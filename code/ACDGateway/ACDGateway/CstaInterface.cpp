@@ -533,4 +533,45 @@ bool CstaInterface::CallMake(std::string devId, std::string destNo, std::string 
 	return true;
 }
 
+bool CstaInterface::CallRelease(std::string devId, long callId,unsigned long invokeId)
+{
+	stringstream sslog("");
+	sslog<<"CstaInterface.CallRelease devid:"<<
+			devId<<" callId:"<<
+			callId<<std::endl;
+	OUTDEBUGLOG(sslog.str());
+	sslog.str("");
 
+	CheckAcsHandle;
+
+	ConnectionID_t con;
+	con.callID = callId;
+	strcpy(con.deviceID,devId.c_str());
+	con.devIDType = ConnectionID_Device_t::staticId;
+
+	retCode = cstaClearConnection(acsHandle, 
+								  invokeId, 
+								  &con, 
+								  NULL);
+
+	if (retCode != ACSPOSITIVE_ACK)
+	{
+		CstaErrorDesc::GetTsapiRetErrDes(retCode, arrErrorMsg);
+		sslog<<"CstaInterface.CallRelease.cstaClearConnection  deviceid:"<<
+				devId<<" callId:"<<
+				callId<<std::endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+
+		if ((retCode == ACSERR_BADHDL) || (retCode == ACSERR_STREAM_FAILED))
+		{
+			sslog<<"CstaInterface.CallRelease deviceid:"<<
+					devId<<" fail\r\n"<<"Invoke cstaClearConnection, return code indicates that stream with tserver is failed."<<std::endl;
+			OUTERRORLOG(sslog.str());
+			sslog.str("");
+		}
+		return false;
+	}
+
+	return true;
+}

@@ -11,6 +11,8 @@ TASKDEVLIST                               AGHelper::taskDevList;
 ICERECMUTEX                               AGHelper::tdlMutex;
 TASKLIST                                  AGHelper::taskList;
 ICERECMUTEX                               AGHelper::tlMutex;
+LOGONMAP                                  AGHelper::logonMap;
+ICERECMUTEX                               AGHelper::lmMutex;
 
 std::string AGHelper::ConvertTaspiCmdToString(EnTsapiCmdType cmdType)
 {
@@ -206,4 +208,93 @@ bool AGHelper::IsExistTask(std::string taskId, EnTaskType taskType)
 	return false;
 }
 
+AGTask* AGHelper::FindTaskByTaskDevRefId(long monRefId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskRefId() == monRefId)
+		{
+			return *iter;
+		}
+	}
+	return NULL;
+}
 
+AGTask *AGHelper::FindTaskByTaskId(std::string taskId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskId() == taskId)
+		{
+			return *iter;
+		}
+	}
+	return NULL;
+}
+
+void AGHelper::RemoveTaskByRefId(long refId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskRefId() == refId)
+		{
+			AGTask *tempTask = (*iter);
+			taskList.erase(iter);
+			delete tempTask;
+			tempTask = NULL;
+			return;
+		}
+	}
+}
+
+void AGHelper::RemoveTaskByTaskId(std::string taskId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskId() == taskId)
+		{
+			AGTask *tempTask = (*iter);
+			taskList.erase(iter);
+			delete tempTask;
+			tempTask = NULL;
+			return;
+		}
+	}
+}
+
+void AGHelper::AddTerAgtToLM(std::string logonTerId, std::string agentId)
+{
+	ICERECMUTEX::Lock lock(lmMutex);
+	logonMap.insert(std::pair<std::string, std::string>(logonTerId, agentId));
+}
+
+std::string AGHelper::FindAgentIdByTerId(std::string terId)
+{
+	ICERECMUTEX::Lock lock(lmMutex);
+	LOGONMAP::iterator findIter;
+	findIter = logonMap.find(terId);
+	if (findIter != logonMap.end())
+	{
+		return (*findIter).second;
+	}
+	return "NOFIND";
+}
+
+void AGHelper::RemoveTerAgtFromLM(std::string terId)
+{
+	ICERECMUTEX::Lock lock(lmMutex);
+	LOGONMAP::iterator findIter;
+	findIter = logonMap.find(terId);
+	if (findIter != logonMap.end())
+	{
+		logonMap.erase(findIter);
+	}
+}

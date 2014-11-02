@@ -88,6 +88,16 @@ void CstaCommand::ProcessCstaCmd(TsapiCommand_t *pCommand)
 			}
 		}
 		break;
+	case Release:
+		{
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->CallRelease(pCommand->activeDevId,
+											   pCommand->activeCallId,
+											   pCommand->invokeId);
+			}
+		}
+		break;
 	}
 }
 

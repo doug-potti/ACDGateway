@@ -132,13 +132,16 @@ void AGService::Main()
 				{
 				case Distribute:
 					{
-						TaskDev_t *taskDev = AGHelper::FindIdleTaskDev();
+						
+						TaskDev_t *taskDev = NULL;
 						while((taskDev = AGHelper::FindIdleTaskDev()) == NULL)
 						{
 							WaitForSingleObject(waitIdleDevHandle, INFINITE);
 						}
+						pTmpTask->SetRefId(taskDev->monitorRefId);
 						DistributeAgentTask *disTask = dynamic_cast<DistributeAgentTask *>(pTmpTask);
 						disTask->SetTaskDevId(taskDev->taskDevId);
+						disTask->SetDialNo( gDBHelper->GetDialNo(disTask->GetTaskId(), disTask->GetBusType(), disTask->GetCustLvl()));
 						AGHelper::AddTaskToTL(pTmpTask);
 						pTmpTask->ExcuteTask();
 					}
@@ -150,6 +153,7 @@ void AGService::Main()
 						{
 							WaitForSingleObject(waitIdleDevHandle, INFINITE);
 						}
+						pTmpTask->SetRefId(taskDev->monitorRefId);
 						TransferTask *transferTask = dynamic_cast<TransferTask *>(pTmpTask);
 						transferTask->SetTaskDevId(taskDev->taskDevId);
 						AGHelper::AddTaskToTL(pTmpTask);
@@ -159,6 +163,7 @@ void AGService::Main()
 				case CancelDistribute:
 				case CancelTransfer:
 					{
+						AGHelper::AddTaskToTL(pTmpTask);
 						pTmpTask->ExcuteTask();
 					}
 					break;

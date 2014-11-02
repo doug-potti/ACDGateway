@@ -6,6 +6,17 @@ DBHelper*                        gDBHelper;
 DBHelper::DBHelper()
 {
 	m_bConn = false;
+	if("MSSQL" == AGHelper::sAcdgwCfg.dbType)
+	{
+		m_conStr.append("Provider=SQLOLEDB.1;Password=");
+		m_conStr.append(AGHelper::sAcdgwCfg.dbPasswnd);
+		m_conStr.append(";Persist Security Info=False;User ID=");
+		m_conStr.append(AGHelper::sAcdgwCfg.dbUser);
+		m_conStr.append(";Initial Catalog=");
+		m_conStr.append(AGHelper::sAcdgwCfg.dbName);
+		m_conStr.append(";Data Source=");
+		m_conStr.append(AGHelper::sAcdgwCfg.dbIp);
+	}
 }
 
 
@@ -267,30 +278,23 @@ bool DBHelper::Eof()
 
 bool DBHelper::GetDevFromDB()
 {
-	std::string                         conStr;
 	std::string							tmpFiled;
-	if("MSSQL" == AGHelper::sAcdgwCfg.dbType)
-	{
-		conStr.append("Provider=SQLOLEDB.1;Password=");
-		conStr.append(AGHelper::sAcdgwCfg.dbPasswnd);
-		conStr.append(";Persist Security Info=False;User ID=");
-		conStr.append(AGHelper::sAcdgwCfg.dbUser);
-		conStr.append(";Initial Catalog=");
-		conStr.append(AGHelper::sAcdgwCfg.dbName);
-		conStr.append(";Data Source=");
-		conStr.append(AGHelper::sAcdgwCfg.dbIp);
-	}
+
 
 	try
 	{
-		bool ret = ConnectDB(conStr.c_str());
-		if (ret)
+		if ( !m_bConn )
+		{
+			ConnectDB(m_conStr.c_str());
+		}
+
+		if (m_bConn)
 		{
 			char								strSql[640];
 			_variant_t							tmp;
 			memset(strSql, 0, 640);
 			strcpy(strSql, "select * from v_ACDGatewayDevList");
-			ret = ExeSelectSQL(strSql);
+			bool ret = ExeSelectSQL(strSql);
 			int recordcnt = GetRecordCount();
 			if ( ret )
 			{
@@ -326,7 +330,6 @@ bool DBHelper::GetDevFromDB()
 
 
 			}
-			DisConnectDB();
 			return true;
 		}
 	}
@@ -344,32 +347,28 @@ bool DBHelper::GetDevFromDB()
 	return false;
 }
 
-bool DBHelper::GetBusDialMap()
+std::string DBHelper::GetDialNo(std::string mediaType, std::string busType, std::string custLvl)
 {
-	std::string                         conStr;
 	std::string							tmpFiled;
-	if("MSSQL" == AGHelper::sAcdgwCfg.dbType)
-	{
-		conStr.append("Provider=SQLOLEDB.1;Password=");
-		conStr.append(AGHelper::sAcdgwCfg.dbPasswnd);
-		conStr.append(";Persist Security Info=False;User ID=");
-		conStr.append(AGHelper::sAcdgwCfg.dbUser);
-		conStr.append(";Initial Catalog=");
-		conStr.append(AGHelper::sAcdgwCfg.dbName);
-		conStr.append(";Data Source=");
-		conStr.append(AGHelper::sAcdgwCfg.dbIp);
-	}
-
 	try
 	{
-		bool ret = ConnectDB(conStr.c_str());
-		if (ret)
+		if ( ! m_bConn )
 		{
-			char								strSql[640];
+			ConnectDB(m_conStr.c_str());
+		}
+		if (m_bConn)
+		{
+			std::string                         sql;
 			_variant_t							tmp;
-			memset(strSql, 0, 640);
-			strcpy(strSql, "select * from v_ACDGatewayGetDialMap");
-			ret = ExeSelectSQL(strSql);
+
+			sql = "select * from v_ACDGatewayGetDialMap where MediaType ='";
+			sql.append(mediaType);
+			sql.append("' and BussinessType='");
+			sql.append(busType);
+			sql.append("' and CustomerLevel='");
+			sql.append(custLvl);
+			sql.append("'");
+			bool ret = ExeSelectSQL(const_cast<char*>(sql.c_str()));
 			int recordcnt = GetRecordCount();
 			if ( ret )
 			{
@@ -381,18 +380,13 @@ bool DBHelper::GetBusDialMap()
 				int fieldcnt = GetFieldCount();
 				for ( int i = 0; i < recordcnt; ++i )
 				{
-					ret = GetFieldVlaue(0, &tmp);
+					ret = GetFieldVlaue(3, &tmp);
 					tmpFiled = _bstr_t(tmp);
-					std::string business = tmpFiled;
-					ret = GetFieldVlaue(1, &tmp);
-					tmpFiled = _bstr_t(tmp);
-					std::string dialNo = tmpFiled;
-					AGHelper::AddDialMapToDM(business, dialNo);
-					( i < recordcnt ) ? MoveNextRecord() : 0;
+						
+					return tmpFiled;
 				}
 			}
-			DisConnectDB();
-			return true;
+			return "";
 		}
 	}
 	catch(...)
@@ -404,10 +398,7 @@ bool DBHelper::GetBusDialMap()
 
 		OUTERRORLOG(ssLog.str());
 		ssLog.str("");
-		return false;
+		return "";
 	}
-
-
-
-	return false;
+	return "";
 }

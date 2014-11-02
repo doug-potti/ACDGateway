@@ -26,6 +26,7 @@ public:
 	bool StopMonitorDevice(long monitorRefId, std::string devId, unsigned long invokeId);
 	bool QueryDeviceInfo(std::string  deviceId, unsigned long invokeId);
 	bool CallMake(std::string devId, std::string destNo, std::string userData,unsigned long invokeId);
+	bool CallRelease(std::string devId, long callId,unsigned long invokeId);
 	void SetPauseFlag(bool isPause);
 
 private:

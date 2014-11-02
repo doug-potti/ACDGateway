@@ -21,7 +21,7 @@ public:
 	~DBHelper();
 
 	bool GetDevFromDB();
-	bool GetBusDialMap();
+	std::string GetDialNo(std::string mediaType, std::string busType, std::string custLvl);
 private:
 	int  GetFieldType(int index);
 	bool ExeSelectSQL(char* sqltext);
@@ -44,6 +44,7 @@ private:
 	_ConnectionPtr						m_pConnection;
 	_CommandPtr							m_pCommand;
 	_RecordsetPtr						m_pRecordSet;
+	std::string                         m_conStr;
 };
 
 extern DBHelper*                        gDBHelper;                         

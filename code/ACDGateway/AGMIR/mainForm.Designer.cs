@@ -43,21 +43,21 @@
             this.txtPort = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnCancelTrans = new System.Windows.Forms.Button();
+            this.btnTrans = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.txtTransId = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.txtSrcId = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.txtDstId = new System.Windows.Forms.TextBox();
-            this.btnCancelTrans = new System.Windows.Forms.Button();
-            this.btnTrans = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.rtInfo = new System.Windows.Forms.RichTextBox();
             this.panel1.SuspendLayout();
-            this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -193,29 +193,6 @@
             this.panel1.Size = new System.Drawing.Size(352, 262);
             this.panel1.TabIndex = 14;
             // 
-            // groupBox1
-            // 
-            this.groupBox1.Controls.Add(this.txtIp);
-            this.groupBox1.Controls.Add(this.txtPort);
-            this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.txtReqId);
-            this.groupBox1.Controls.Add(this.label2);
-            this.groupBox1.Controls.Add(this.label5);
-            this.groupBox1.Controls.Add(this.txtMediaType);
-            this.groupBox1.Controls.Add(this.button1);
-            this.groupBox1.Controls.Add(this.label3);
-            this.groupBox1.Controls.Add(this.btnDis);
-            this.groupBox1.Controls.Add(this.txtBusType);
-            this.groupBox1.Controls.Add(this.txtCustLv);
-            this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.groupBox1.Location = new System.Drawing.Point(0, 0);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(352, 143);
-            this.groupBox1.TabIndex = 0;
-            this.groupBox1.TabStop = false;
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.btnCancelTrans);
@@ -232,6 +209,24 @@
             this.groupBox2.Size = new System.Drawing.Size(352, 119);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
+            // 
+            // btnCancelTrans
+            // 
+            this.btnCancelTrans.Location = new System.Drawing.Point(206, 79);
+            this.btnCancelTrans.Name = "btnCancelTrans";
+            this.btnCancelTrans.Size = new System.Drawing.Size(126, 28);
+            this.btnCancelTrans.TabIndex = 13;
+            this.btnCancelTrans.Text = "取消请求转移座席";
+            this.btnCancelTrans.UseVisualStyleBackColor = true;
+            // 
+            // btnTrans
+            // 
+            this.btnTrans.Location = new System.Drawing.Point(43, 79);
+            this.btnTrans.Name = "btnTrans";
+            this.btnTrans.Size = new System.Drawing.Size(118, 28);
+            this.btnTrans.TabIndex = 12;
+            this.btnTrans.Text = "请求转移座席";
+            this.btnTrans.UseVisualStyleBackColor = true;
             // 
             // label7
             // 
@@ -284,41 +279,46 @@
             this.txtDstId.TabIndex = 11;
             this.txtDstId.Text = "4502";
             // 
-            // btnCancelTrans
+            // groupBox1
             // 
-            this.btnCancelTrans.Location = new System.Drawing.Point(206, 79);
-            this.btnCancelTrans.Name = "btnCancelTrans";
-            this.btnCancelTrans.Size = new System.Drawing.Size(126, 28);
-            this.btnCancelTrans.TabIndex = 13;
-            this.btnCancelTrans.Text = "取消请求转移座席";
-            this.btnCancelTrans.UseVisualStyleBackColor = true;
-            // 
-            // btnTrans
-            // 
-            this.btnTrans.Location = new System.Drawing.Point(43, 79);
-            this.btnTrans.Name = "btnTrans";
-            this.btnTrans.Size = new System.Drawing.Size(118, 28);
-            this.btnTrans.TabIndex = 12;
-            this.btnTrans.Text = "请求转移座席";
-            this.btnTrans.UseVisualStyleBackColor = true;
+            this.groupBox1.Controls.Add(this.txtIp);
+            this.groupBox1.Controls.Add(this.txtPort);
+            this.groupBox1.Controls.Add(this.label1);
+            this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Controls.Add(this.txtReqId);
+            this.groupBox1.Controls.Add(this.label2);
+            this.groupBox1.Controls.Add(this.label5);
+            this.groupBox1.Controls.Add(this.txtMediaType);
+            this.groupBox1.Controls.Add(this.button1);
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.btnDis);
+            this.groupBox1.Controls.Add(this.txtBusType);
+            this.groupBox1.Controls.Add(this.txtCustLv);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.groupBox1.Location = new System.Drawing.Point(0, 0);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(352, 143);
+            this.groupBox1.TabIndex = 0;
+            this.groupBox1.TabStop = false;
             // 
             // panel2
             // 
-            this.panel2.Controls.Add(this.richTextBox1);
+            this.panel2.Controls.Add(this.rtInfo);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(289, 262);
             this.panel2.TabIndex = 15;
             // 
-            // richTextBox1
+            // rtInfo
             // 
-            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBox1.Location = new System.Drawing.Point(0, 0);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(289, 262);
-            this.richTextBox1.TabIndex = 0;
-            this.richTextBox1.Text = "";
+            this.rtInfo.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtInfo.Location = new System.Drawing.Point(0, 0);
+            this.rtInfo.Name = "rtInfo";
+            this.rtInfo.Size = new System.Drawing.Size(289, 262);
+            this.rtInfo.TabIndex = 0;
+            this.rtInfo.Text = "";
             // 
             // mainForm
             // 
@@ -332,10 +332,10 @@
             this.Name = "mainForm";
             this.Text = "AGMIR";
             this.panel1.ResumeLayout(false);
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.panel2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -369,7 +369,7 @@
         private System.Windows.Forms.TextBox txtDstId;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.RichTextBox rtInfo;
     }
 }
 

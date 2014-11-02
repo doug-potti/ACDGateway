@@ -53,6 +53,7 @@ enum EnTsapiCmdType
 	MonitorDevice,
 	MonitorViaDevice,
 	MakeCall,
+	Release,
 };
 
 enum EnDevType
@@ -164,6 +165,7 @@ typedef std::map<long, Dev_t*> MONDEVMAP;
 typedef std::map<std::string, std::string> DIALMAP;
 typedef std::vector<TaskDev_t *> TASKDEVLIST;
 typedef std::vector<AGTask *> TASKLIST;
+typedef std::map<std::string, std::string> LOGONMAP;
 class AGHelper
 {
 public:
@@ -188,23 +190,36 @@ public:
 
 	static void          AddTaskToTL(AGTask *agTask);
 	static bool          IsExistTask(std::string taskId, EnTaskType taskType);
+	static AGTask*       FindTaskByTaskDevRefId(long monRefId);
+	static AGTask*       FindTaskByTaskId(std::string taskId);
+	static void          RemoveTaskByRefId(long refId);
+	static void          RemoveTaskByTaskId(std::string taskId);
+
+	static void          AddTerAgtToLM(std::string logonTerId, std::string agentId);
+	static void          RemoveTerAgtFromLM(std::string terId);
+	static std::string   FindAgentIdByTerId(std::string terId);
+
 private:
 	static std::string   ConvertULToString(unsigned long ulInput);
 public:
 	static AcdgwCfg_t    sAcdgwCfg;
 	static DEVLIST       sDevList;
+	static DIALMAP       dialMap;
 private:
 
 	static MONDEVMAP     monDevMap;
 	static ICERECMUTEX   mdmMutex;
 
-	static DIALMAP       dialMap;
+	
 
 	static TASKDEVLIST   taskDevList;
 	static ICERECMUTEX   tdlMutex;
 
-	static TASKLIST       taskList;
+	static TASKLIST      taskList;
 	static ICERECMUTEX   tlMutex;
+
+	static LOGONMAP      logonMap;
+	static ICERECMUTEX   lmMutex;
 
 };
 
