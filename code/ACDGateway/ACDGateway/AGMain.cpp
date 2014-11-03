@@ -115,15 +115,23 @@ void AGService::Main()
 
 	while (!isDone)
 	{
-		IceUtil::Monitor<IceUtil::RecMutex>::Lock lock(tlMutex);
-		while(taskList.size() == 0)
+		AGTask *pTmpTask = NULL;
+		try
 		{
-			tlMutex.wait();
+			tlMutex.lock();
+			while(taskList.size() == 0)
+			{
+				tlMutex.wait();
+			}
+			pTmpTask = taskList.front();
+			taskList.pop();
+			tlMutex.unlock();
+		}
+		catch(...)
+		{
+			tlMutex.unlock();
 		}
 
-		AGTask *pTmpTask = NULL;
-		pTmpTask = taskList.front();
-		taskList.pop();
 		if (pTmpTask != NULL)
 		{
 			try
@@ -141,7 +149,7 @@ void AGService::Main()
 						pTmpTask->SetRefId(taskDev->monitorRefId);
 						DistributeAgentTask *disTask = dynamic_cast<DistributeAgentTask *>(pTmpTask);
 						disTask->SetTaskDevId(taskDev->taskDevId);
-						disTask->SetDialNo( gDBHelper->GetDialNo(disTask->GetTaskId(), disTask->GetBusType(), disTask->GetCustLvl()));
+						disTask->SetDialNo( gDBHelper->GetDialNo(disTask->GetMediaType(), disTask->GetBusType(), disTask->GetCustLvl()));
 						AGHelper::AddTaskToTL(pTmpTask);
 						pTmpTask->ExcuteTask();
 					}

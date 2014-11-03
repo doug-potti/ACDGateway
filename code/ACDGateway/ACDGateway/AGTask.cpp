@@ -17,6 +17,22 @@ void DistributeAgentTask::ExcuteTask()
 	OUTDEBUGLOG(ssLog.str());
 	ssLog.str("");
 
+	if (dialNo.empty())
+	{
+		ssLog<<"ACDGateway.DistributeAgentTask not find dialing skill taskId"<<
+				taskId<<std::endl;
+		OUTERRORLOG(ssLog.str());
+		ssLog.str("");
+		if (gAGHttpServer != NULL)
+		{
+			gAGHttpServer->SendResponse(taskId,
+										gAGHttpServer->ConstructFailDesc(taskId, "NotFindSkill") );
+		}
+		AGHelper::SetIdleTaskDev(taskDevId);
+		AGHelper::RemoveTaskByTaskId(taskId);
+		return;
+	}
+
 	TsapiCommand_t *pNewCommand = new TsapiCommand_t();
 	if (pNewCommand)
 	{

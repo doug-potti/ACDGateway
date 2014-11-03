@@ -18,7 +18,7 @@ namespace AGMIR
         {
             get
             {
-                return string.Format("http://{0}:{1}/DistributeMultimediaCall.html",
+                return string.Format("http://{0}:{1}",
                                      txtIp.Text,
                                      txtPort.Text);
             }
@@ -38,15 +38,14 @@ namespace AGMIR
             {
                 return;
             }
-            
-            Uri uri = new Uri(string.Format("{0}?Id={1}&Mediatype={2}&Businesstype={3}&Customlevel={4}",
+            WebClient wc = new WebClient();
+            Uri uri = new Uri(string.Format("{0}/DistributeMultimediaCall.html?Id={1}&Mediatype={2}&Businesstype={3}&Customlevel={4}",
                                              AGUrl,
                                              txtReqId.Text,
                                              txtMediaType.Text,
                                              txtBusType.Text,
                                              txtCustLv.Text), UriKind.RelativeOrAbsolute);
 
-            WebClient wc = new WebClient();
             wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
             wc.OpenReadAsync(uri);
         }
@@ -64,6 +63,13 @@ namespace AGMIR
             {
                 return;
             }
+            WebClient wc = new WebClient();
+            Uri uri = new Uri(string.Format("{0}/CancelDistributeMultimediaCall.html?Id={1}",
+                                             AGUrl,
+                                             txtReqId.Text), UriKind.RelativeOrAbsolute);
+
+            wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
+            wc.OpenReadAsync(uri);
         }
     }
 }

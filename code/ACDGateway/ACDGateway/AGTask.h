@@ -94,7 +94,10 @@ public:
 	{
 		return dialNo;
 	}
-
+	std::string GetMediaType()
+	{
+		return mediaType;
+	}
 	std::string GetBusType()
 	{
 		return businessType;
