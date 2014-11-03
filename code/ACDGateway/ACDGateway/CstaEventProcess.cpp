@@ -219,6 +219,24 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 					}
 				}
 			}
+			else if (cstaReqType == (int)MakeCall)
+			{
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD);
+				if (agTask != NULL)
+				{
+					if (agTask->GetTaskType() == Distribute)
+					{
+						if (gAGHttpServer != NULL)
+						{
+							gAGHttpServer->SendResponse(agTask->GetTaskId(),
+														gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(), "ResourceBusy"));
+						}
+						AGHelper::RemoveTaskByDevId(deviD);
+						AGHelper::SetIdleTaskDev(deviD);
+					}
+				}
+			}
+
 		}
 		break;
 	default:

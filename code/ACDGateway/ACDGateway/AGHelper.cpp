@@ -236,6 +236,21 @@ AGTask *AGHelper::FindTaskByTaskId(std::string taskId)
 	return NULL;
 }
 
+AGTask *AGHelper::FindTaskByDevId(std::string devId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskDevId() == devId)
+		{
+			return *iter;
+		}
+	}
+	return NULL;
+}
+
+
 void AGHelper::RemoveTaskByRefId(long refId)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
@@ -260,6 +275,23 @@ void AGHelper::RemoveTaskByTaskId(std::string taskId)
 	for (; iter != taskList.end(); ++iter)
 	{
 		if ((*iter)->GetTaskId() == taskId)
+		{
+			AGTask *tempTask = (*iter);
+			taskList.erase(iter);
+			delete tempTask;
+			tempTask = NULL;
+			return;
+		}
+	}
+}
+
+void AGHelper::RemoveTaskByDevId(std::string devId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskDevId() == devId)
 		{
 			AGTask *tempTask = (*iter);
 			taskList.erase(iter);

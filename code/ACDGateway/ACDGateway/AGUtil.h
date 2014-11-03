@@ -192,8 +192,10 @@ public:
 	static bool          IsExistTask(std::string taskId, EnTaskType taskType);
 	static AGTask*       FindTaskByTaskDevRefId(long monRefId);
 	static AGTask*       FindTaskByTaskId(std::string taskId);
+	static AGTask*       FindTaskByDevId(std::string devId);
 	static void          RemoveTaskByRefId(long refId);
 	static void          RemoveTaskByTaskId(std::string taskId);
+	static void          RemoveTaskByDevId(std::string devId);
 
 	static void          AddTerAgtToLM(std::string logonTerId, std::string agentId);
 	static void          RemoveTerAgtFromLM(std::string terId);
