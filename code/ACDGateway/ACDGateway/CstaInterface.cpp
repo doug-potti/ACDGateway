@@ -575,3 +575,141 @@ bool CstaInterface::CallRelease(std::string devId, long callId,unsigned long inv
 
 	return true;
 }
+
+bool CstaInterface::CallConsult(long callid, std::string devId, std::string destNo, std::string userData,unsigned long invokeId)
+{
+	CheckAcsHandle;
+	if (userData.length() > 0)
+	{
+		ATTUserToUserInfo_t uui;
+		uui.type = ATTUUIProtocolType_t::uuiUserSpecific;
+		uui.data.length = userData.length();
+		strcpy((char *)uui.data.value,userData.c_str());
+
+		retCode = attV6ConsultationCall(&privateData,
+										NULL,
+										false, 
+										&uui);
+
+		if (retCode != ACSPOSITIVE_ACK)
+		{
+			CstaErrorDesc::GetTsapiRetErrDes(retCode, arrErrorMsg);
+			stringstream sslog("");
+			sslog<<"CstaInterface.CallConsult.attV6ConsultationCall set uui  deviceid:"<<
+					devId<<" callid:"<<
+					callid<<" destno:"<<
+					destNo<<"  uui:"<<
+					userData<<" fail\r\n"<<"fail msg:"<<
+					arrErrorMsg<<endl;
+			OUTERRORLOG(sslog.str());
+			sslog.str("");
+		}
+	}
+
+	ConnectionID_t con;
+	con.callID = callid;
+	strcpy(con.deviceID,devId.c_str());
+	con.devIDType = ConnectionID_Device_t::staticId;
+	DeviceID_t t_calleddevid;
+	strcpy(t_calleddevid,destNo.c_str());
+
+	retCode = cstaConsultationCall(acsHandle,
+									invokeId,
+									&con,
+									&t_calleddevid,
+									(PrivateData_t *)&privateData);
+
+	if (retCode != ACSPOSITIVE_ACK)
+	{
+		CstaErrorDesc::GetTsapiRetErrDes(retCode, arrErrorMsg);
+		stringstream sslog("");
+		sslog<<"CstaInterface.CallConsult.cstaConsultationCall  deviceid:"<<
+				devId<<" callid:"<<
+				callid<<" destno:"<<
+				destNo<<"  uui:"<<
+				userData<<" fail\r\n"<<"fail msg:"<<
+				arrErrorMsg<<std::endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+
+		return false;
+	}
+
+	return true;
+}
+
+bool CstaInterface::CallCancelConsult(long activeCallId, std::string activeDevId, long heldCallId, std::string heldDevId,unsigned long invokeId)
+{
+	CheckAcsHandle;
+
+	ConnectionID_t activecon;
+	activecon.callID = activeCallId;
+	strcpy(activecon.deviceID,activeDevId.c_str());
+	activecon.devIDType = ConnectionID_Device_t::staticId;
+
+	ConnectionID_t heldcon;
+	heldcon.callID = heldCallId;
+	strcpy(heldcon.deviceID,activeDevId.c_str());
+	heldcon.devIDType = ConnectionID_Device_t::staticId;
+
+	retCode = cstaReconnectCall(acsHandle, 
+								invokeId,
+								&activecon,
+								&heldcon,
+								NULL);
+
+	if (retCode != ACSPOSITIVE_ACK)
+	{
+		CstaErrorDesc::GetTsapiRetErrDes(retCode, arrErrorMsg);
+		stringstream sslog("");
+		sslog<<"CstaInterface.CallCancelConsult.cstaReconnectCall  activedeviceid:"<<
+				activeDevId<<" activecallid:"<<
+				activeCallId<<" heldterid:"<<
+				heldDevId<<"  heldcallid:"<<
+				heldCallId<<" fail\r\n"<<"fail msg:"<<
+				arrErrorMsg<<std::endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+		return false;
+	}
+
+	return true;
+}
+
+bool CstaInterface::CallTransfer(long activeCallId, std::string activeDevId, long heldCallId, std::string heldDevId,unsigned long invokeId)
+{
+	CheckAcsHandle;
+
+	ConnectionID_t activecon;
+	activecon.callID = activeCallId;
+	strcpy(activecon.deviceID,activeDevId.c_str());
+	activecon.devIDType = ConnectionID_Device_t::staticId;
+
+	ConnectionID_t heldcon;
+	heldcon.callID = heldCallId;
+	strcpy(heldcon.deviceID,activeDevId.c_str());
+	heldcon.devIDType = ConnectionID_Device_t::staticId;
+
+	retCode = cstaTransferCall(acsHandle, 
+								invokeId, 
+								&heldcon, 
+								&activecon, 
+								NULL);
+
+	if (retCode != ACSPOSITIVE_ACK)
+	{
+		CstaErrorDesc::GetTsapiRetErrDes(retCode, arrErrorMsg);
+		stringstream sslog("");
+		sslog<<"CstaInterface.CallTransfer.cstaTransferCall  activedeviceid:"<<
+				activeDevId<<" activecallid:"<<
+				activeCallId<<" heldterid:"<<
+				heldDevId<<"  heldcallid:"<<
+				heldCallId<<" fail\r\n"<<"fail msg:"<<
+				arrErrorMsg<<endl;
+		OUTERRORLOG(sslog.str());
+		sslog.str("");
+		return false;
+	}
+
+	return true;
+}

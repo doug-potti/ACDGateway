@@ -25,7 +25,6 @@ public:
 	{
 		isDone = false;
 		gAGService = this;
-		waitIdleDevHandle = CreateEvent(NULL,FALSE,FALSE,NULL);
 	}
 	~AGService(){}
 
@@ -43,11 +42,7 @@ public:
 	void CreateConfigWin(HINSTANCE p_hInstance, HWND p_hWnd){}
 
 	void AddTaskToTL(AGTask *agTask);
-
-	void SetIdleDevHandle()
-	{
-		SetEvent(waitIdleDevHandle);
-	}
+	std::string GetDialNo(std::string medId, std::string medType, std::string cystLvl);
 private:
 	void StratMonitorDevice(); 
 	
@@ -55,7 +50,6 @@ private:
 	AGTASKLIST                           taskList;
 	IceUtil::Monitor<IceUtil::RecMutex>  tlMutex;
 	bool                                 isDone;
-	HANDLE                               waitIdleDevHandle;
 };
 
 const unsigned int ACDGW_MAJOR_VERSION						= 1;

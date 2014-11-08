@@ -218,6 +218,7 @@
             this.btnCancelTrans.TabIndex = 13;
             this.btnCancelTrans.Text = "取消请求转移座席";
             this.btnCancelTrans.UseVisualStyleBackColor = true;
+            this.btnCancelTrans.Click += new System.EventHandler(this.btnCancelTrans_Click);
             // 
             // btnTrans
             // 
@@ -227,6 +228,7 @@
             this.btnTrans.TabIndex = 12;
             this.btnTrans.Text = "请求转移座席";
             this.btnTrans.UseVisualStyleBackColor = true;
+            this.btnTrans.Click += new System.EventHandler(this.btnTrans_Click);
             // 
             // label7
             // 
@@ -243,7 +245,7 @@
             this.txtTransId.Name = "txtTransId";
             this.txtTransId.Size = new System.Drawing.Size(100, 21);
             this.txtTransId.TabIndex = 7;
-            this.txtTransId.Text = "1003";
+            this.txtTransId.Text = "1002";
             // 
             // label8
             // 
@@ -260,7 +262,7 @@
             this.txtSrcId.Name = "txtSrcId";
             this.txtSrcId.Size = new System.Drawing.Size(100, 21);
             this.txtSrcId.TabIndex = 9;
-            this.txtSrcId.Text = "4501";
+            this.txtSrcId.Text = "4531";
             // 
             // label9
             // 
@@ -277,7 +279,7 @@
             this.txtDstId.Name = "txtDstId";
             this.txtDstId.Size = new System.Drawing.Size(100, 21);
             this.txtDstId.TabIndex = 11;
-            this.txtDstId.Text = "4502";
+            this.txtDstId.Text = "4741";
             // 
             // groupBox1
             // 

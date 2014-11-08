@@ -77,7 +77,8 @@ void CstaCommand::ProcessCstaCmd(TsapiCommand_t *pCommand)
 			}
 		}
 		break;
-	case MakeCall:
+	case DistributeMakeCall:
+	case TransferMakeCall:
 		{
 			if (gCstaInterfaceThd != NULL)
 			{
@@ -88,13 +89,50 @@ void CstaCommand::ProcessCstaCmd(TsapiCommand_t *pCommand)
 			}
 		}
 		break;
-	case Release:
+	case DistributeRelease:
+	case TransferRelease:
 		{
 			if (gCstaInterfaceThd != NULL)
 			{
 				gCstaInterfaceThd->CallRelease(pCommand->activeDevId,
 											   pCommand->activeCallId,
 											   pCommand->invokeId);
+			}
+		}
+		break;
+	case TranConsult:
+		{
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->CallConsult(pCommand->activeCallId,
+											   pCommand->activeDevId,
+											   pCommand->destNo,
+											   pCommand->uui,
+											   pCommand->invokeId);
+			}
+		}
+		break;
+	case CancelTranConsult:
+		{
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->CallCancelConsult(pCommand->activeCallId,
+					                                 pCommand->activeDevId,
+													 pCommand->heldCallId,
+													 pCommand->heldDevId,
+													 pCommand->invokeId);
+			}
+		}
+		break;
+	case TranTransfer:
+		{
+			if (gCstaInterfaceThd != NULL)
+			{
+				gCstaInterfaceThd->CallTransfer(pCommand->activeCallId,
+					                            pCommand->activeDevId,
+												pCommand->heldCallId,
+												pCommand->heldDevId,
+												pCommand->invokeId);
 			}
 		}
 		break;

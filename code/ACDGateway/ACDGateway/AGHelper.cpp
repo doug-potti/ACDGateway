@@ -1,6 +1,8 @@
 
 #include "AGUtil.h"
 #include "AGService.h"
+#include "AGExcuteMakeCallThd.h"
+#include "AGExcuteMakeCallThd.h"
 
 AcdgwCfg_t                                AGHelper::sAcdgwCfg;
 DEVLIST                                   AGHelper::sDevList;
@@ -18,8 +20,14 @@ std::string AGHelper::ConvertTaspiCmdToString(EnTsapiCmdType cmdType)
 {
 	switch(cmdType)
 	{
-	case MakeCall:
-		return "MakeCall";
+	case DistributeRelease:
+		return"DistributeRelease";
+	case TransferRelease:
+		return"TransferRelease";
+	case DistributeMakeCall:
+		return "DistributeMakeCall";
+	case TransferMakeCall:
+		return"TransferMakeCall";
 	case MonitorDevice:
 		return "MonitorDevice";
 	case MonitorViaDevice:
@@ -178,11 +186,20 @@ void AGHelper::SetIdleTaskDev(std::string devId)
 		if ((*iter)->taskDevId == devId && !((*iter)->isIdle))
 		{
 			(*iter)->isIdle = true;
-			if (gAGService != NULL)
+			if (gAGExcuteMakeCall != NULL)
 			{
-				gAGService->SetIdleDevHandle();
+				gAGExcuteMakeCall->SetIdleDevHandle();
 			}
 		}
+	}
+}
+
+void AGHelper::SetIdleDevHandle()
+{
+	ICERECMUTEX::Lock lock(tdlMutex);
+	if (gAGExcuteMakeCall != NULL)
+	{
+		gAGExcuteMakeCall->SetIdleDevHandle();
 	}
 }
 
@@ -208,13 +225,13 @@ bool AGHelper::IsExistTask(std::string taskId, EnTaskType taskType)
 	return false;
 }
 
-AGTask* AGHelper::FindTaskByTaskDevRefId(long monRefId)
+AGTask* AGHelper::FindTaskByTaskDevRefId(long monRefId, EnTaskType taskType)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskRefId() == monRefId)
+		if ((*iter)->GetTaskRefId() == monRefId && (*iter)->GetTaskType() == taskType)
 		{
 			return *iter;
 		}
@@ -222,13 +239,13 @@ AGTask* AGHelper::FindTaskByTaskDevRefId(long monRefId)
 	return NULL;
 }
 
-AGTask *AGHelper::FindTaskByTaskId(std::string taskId)
+AGTask *AGHelper::FindTaskByTaskId(std::string taskId, EnTaskType taskType)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskId() == taskId)
+		if ((*iter)->GetTaskId() == taskId && (*iter)->GetTaskType() == taskType)
 		{
 			return *iter;
 		}
@@ -236,13 +253,26 @@ AGTask *AGHelper::FindTaskByTaskId(std::string taskId)
 	return NULL;
 }
 
-AGTask *AGHelper::FindTaskByDevId(std::string devId)
+AGTask *AGHelper::FindTaskByDevId(std::string devId, EnTaskType taskType)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskDevId() == devId)
+		if ((*iter)->GetTaskDevId() == devId && (*iter)->GetTaskType() == taskType )
+		{
+			return *iter;
+		}
+	}
+	return NULL;
+}
+AGTask *AGHelper::FindTaskByAssCallId(long callId)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskCallId() == callId)
 		{
 			return *iter;
 		}
@@ -250,16 +280,66 @@ AGTask *AGHelper::FindTaskByDevId(std::string devId)
 	return NULL;
 }
 
-
-void AGHelper::RemoveTaskByRefId(long refId)
+bool AGHelper::IsExistTaskByTaskIdAgtId(std::string taskId, std::string agentId)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskRefId() == refId)
+		if ((*iter)->GetTaskId() == taskId && 
+			(*iter)->GetTaskType() == Distribute)
+		{
+			DistributeAgentTask *dsaTask = dynamic_cast<DistributeAgentTask *>(*iter);
+			if (dsaTask->GetAgentId() == agentId)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void AGHelper::RemoveTaskByRefId(long refId, EnTaskType taskType)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskRefId() == refId && (*iter)->GetTaskType() == taskType)
 		{
 			AGTask *tempTask = (*iter);
+			if (taskType == Distribute || taskType == Transer)
+			{
+				if (gAGExcuteMakeCall != NULL)
+				{
+					gAGExcuteMakeCall->RemoveMakeCallTask(tempTask->GetTaskId(),tempTask->GetTaskType());
+				}
+			}
+			taskList.erase(iter);
+			delete tempTask;
+			tempTask = NULL;
+			return;
+		}
+	}
+
+}
+
+void AGHelper::RemoveTaskByTaskId(std::string taskId, EnTaskType taskType)
+{
+	ICERECMUTEX::Lock lock(tlMutex);
+	TASKLIST::iterator iter = taskList.begin();
+	for (; iter != taskList.end(); ++iter)
+	{
+		if ((*iter)->GetTaskId() == taskId && (*iter)->GetTaskType() == taskType)
+		{
+			AGTask *tempTask = (*iter);
+			if (taskType == Distribute || taskType == Transer)
+			{
+				if (gAGExcuteMakeCall != NULL)
+				{
+					gAGExcuteMakeCall->RemoveMakeCallTask(tempTask->GetTaskId(),tempTask->GetTaskType());
+				}
+			}
 			taskList.erase(iter);
 			delete tempTask;
 			tempTask = NULL;
@@ -268,15 +348,22 @@ void AGHelper::RemoveTaskByRefId(long refId)
 	}
 }
 
-void AGHelper::RemoveTaskByTaskId(std::string taskId)
+void AGHelper::RemoveTaskByDevId(std::string devId, EnTaskType taskType)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskId() == taskId)
+		if ((*iter)->GetTaskDevId() == devId && (*iter)->GetTaskType() == taskType)
 		{
 			AGTask *tempTask = (*iter);
+			if (taskType == Distribute || taskType == Transer)
+			{
+				if (gAGExcuteMakeCall != NULL)
+				{
+					gAGExcuteMakeCall->RemoveMakeCallTask(tempTask->GetTaskId(),tempTask->GetTaskType());
+				}
+			}
 			taskList.erase(iter);
 			delete tempTask;
 			tempTask = NULL;
@@ -284,16 +371,23 @@ void AGHelper::RemoveTaskByTaskId(std::string taskId)
 		}
 	}
 }
-
-void AGHelper::RemoveTaskByDevId(std::string devId)
+void AGHelper::RemoveTaskByCallId(long callId)
 {
 	ICERECMUTEX::Lock lock(tlMutex);
 	TASKLIST::iterator iter = taskList.begin();
 	for (; iter != taskList.end(); ++iter)
 	{
-		if ((*iter)->GetTaskDevId() == devId)
+		if ((*iter)->GetTaskCallId() == callId)
 		{
 			AGTask *tempTask = (*iter);
+			EnTaskType taskType = tempTask->GetTaskType();
+			if (taskType == Distribute || taskType == Transer)
+			{
+				if (gAGExcuteMakeCall != NULL)
+				{
+					gAGExcuteMakeCall->RemoveMakeCallTask(tempTask->GetTaskId(),taskType);
+				}
+			}
 			taskList.erase(iter);
 			delete tempTask;
 			tempTask = NULL;
@@ -301,7 +395,6 @@ void AGHelper::RemoveTaskByDevId(std::string devId)
 		}
 	}
 }
-
 void AGHelper::AddTerAgtToLM(std::string logonTerId, std::string agentId)
 {
 	ICERECMUTEX::Lock lock(lmMutex);

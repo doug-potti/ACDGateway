@@ -10,13 +10,18 @@ enum EnTaskType
 	Transer,
 	CancelTransfer,
 };
+enum EnTransferTaskType
+{
+	Make,
+	Consult,
+};
 class  AGTask
 {
 public:
 	AGTask(){}
 	AGTask(std::string taskid,EnTaskType tskType):taskId(taskid),taskType(tskType),taskCallId(-1),monRefId(-1)
 	{
-
+		taskDevId = "";
 	}
 	virtual ~AGTask(){}
 	virtual void ExcuteTask() = 0;
@@ -60,6 +65,12 @@ public:
 		return taskCallId;
 	}
 
+	long GetMonRfId()
+	{
+		return monRefId;
+	}
+
+
 protected:
 	EnTaskType  taskType;
 	std::string taskId;
@@ -74,8 +85,9 @@ public:
 	DistributeAgentTask(std::string tskId,
 		                std::string medType,
 						std::string busType,
-						std::string custLevel):AGTask(tskId,Distribute),mediaType(medType),businessType(busType), 
-						                    customerLevel(custLevel)
+						std::string custLevel,
+						std::string dialno):AGTask(tskId,Distribute),mediaType(medType),businessType(busType), 
+						                    customerLevel(custLevel),dialNo(dialno),agentId("")
 	{}
 	~DistributeAgentTask(){}
 	void ExcuteTask();
@@ -90,6 +102,15 @@ public:
 		dialNo = dialno;
 	}
 
+	void SetAgentId(std::string agtId)
+	{
+		agentId = agtId;
+	}
+
+	std::string GetAgentId()
+	{
+		return agentId;
+	}
 	std::string GetDialNo()
 	{
 		return dialNo;
@@ -119,6 +140,7 @@ private:
 	std::string businessType;
 	std::string customerLevel;
 	std::string dialNo;
+	std::string agentId;
 };
 
 class CancelDisAgtTask:public AGTask
@@ -137,17 +159,46 @@ class TransferTask:public AGTask
 public:
 	TransferTask(std::string tskId, 
 				 std::string srcId, 
-				 std::string dstId):AGTask(tskId, Transer),sourceId(srcId),destId(dstId)
+				 std::string dstId):AGTask(tskId, Transer),sourceId(srcId),destId(dstId), heldCallId(-1),activeCallId(-1)
 	{
 
 	}
 	~TransferTask(){}
 	void ExcuteTask();
 
+	void SetTransferTaskType(EnTransferTaskType ttType)
+	{
+		transferTaskType = ttType;
+	}
+
+
+	void SetHeldCallId(long callId)
+	{
+		heldCallId= callId;
+	}
+
+	void SetActiveCallId(long callId)
+	{
+		activeCallId = callId;
+	}
+
+	EnTransferTaskType GetTransferTaskType()
+	{
+		return transferTaskType;
+	}
 
 	std::string GetDestNo()
 	{
 		return destId;
+	}
+	long GetHeldCallId()
+	{
+		return heldCallId;
+	}
+
+	long GetActiveCallId()
+	{
+		return activeCallId;
 	}
 private:
 	std::string GetUui()
@@ -157,6 +208,9 @@ private:
 private:
 	std::string sourceId;
 	std::string destId;
+	long        heldCallId;
+	long        activeCallId;
+	EnTransferTaskType transferTaskType;
 
 };
 
@@ -169,4 +223,5 @@ public:
 	~CancelTransferTask(){}
 	void ExcuteTask(); 
 };
+
 #endif

@@ -219,24 +219,39 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 					}
 				}
 			}
-			else if (cstaReqType == (int)MakeCall)
+			else if (cstaReqType == (int)DistributeMakeCall)
 			{
-				AGTask *agTask = AGHelper::FindTaskByDevId(deviD);
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD, Distribute);
 				if (agTask != NULL)
 				{
-					if (agTask->GetTaskType() == Distribute)
+					std::string tskId = agTask->GetTaskId();
+					if (gAGHttpServer != NULL)
 					{
-						if (gAGHttpServer != NULL)
-						{
-							gAGHttpServer->SendResponse(agTask->GetTaskId(),
-														gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(), "ResourceBusy"));
-						}
-						AGHelper::RemoveTaskByDevId(deviD);
-						AGHelper::SetIdleTaskDev(deviD);
+						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
 					}
+					AGHelper::RemoveTaskByDevId(deviD, Distribute);
+					AGHelper::SetIdleTaskDev(deviD);
 				}
 			}
+			else if (cstaReqType == (int)TransferMakeCall)
+			{
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD, Transer);
+				if (agTask != NULL)
+				{
+					std::string tskId = agTask->GetTaskId();
+					if (gAGHttpServer != NULL)
+					{
+						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
+					}
+					AGHelper::RemoveTaskByDevId(deviD, Transer);
+					AGHelper::SetIdleTaskDev(deviD);
+					
+				}
+			}
+			else
+			{
 
+			}
 		}
 		break;
 	default:
@@ -267,55 +282,171 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 	case CSTA_CONNECTION_CLEARED:
 		{
 			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			std::string tskId = "";
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId, Distribute);
 			if (agTask != NULL)
 			{
-				if (agTask->GetTaskDevId() == pCstaUnse->u.connectionCleared.releasingDevice.deviceID)
+				if (agTask->GetTaskCallId() == pCstaUnse->u.connectionCleared.droppedConnection.callID)
 				{
-					std::string taskId = "";
-					if (agTask->GetTaskType() == Distribute)
+					if (agTask->GetTaskDevId() == pCstaUnse->u.connectionCleared.releasingDevice.deviceID)
 					{
-						taskId = agTask->GetTaskId();
-						AGHelper::RemoveTaskByRefId(refId);
+						tskId = agTask->GetTaskId();
+						AGTask *canTask = AGHelper::FindTaskByTaskId(tskId, CancelDistribute);
+						if (canTask != NULL)
+						{
+							if (gAGHttpServer != NULL)
+							{
+								gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructCanDASuc(tskId));
+							}
+							AGHelper::RemoveTaskByTaskId(tskId, CancelDistribute);
+						}
+						AGHelper::RemoveTaskByRefId(refId, Distribute);
 						AGHelper::SetIdleTaskDev(pCstaUnse->u.connectionCleared.releasingDevice.deviceID);
 					}
-					agTask = AGHelper::FindTaskByTaskId(taskId);
-					if (agTask != NULL && agTask->GetTaskType() == CancelDistribute)
-					{
-						if (gAGHttpServer != NULL)
-						{
-							gAGHttpServer->SendResponse(agTask->GetTaskId(),
-														gAGHttpServer->ConstructCanDASuc(agTask->GetTaskId()));
-						}
-						AGHelper::RemoveTaskByTaskId(taskId);
-					}
-
 				}
 			}
+
+			agTask = AGHelper::FindTaskByTaskDevRefId(refId,Transer);
+			if (agTask != NULL)
+			{
+				TransferTask *tTask = dynamic_cast<TransferTask *>(agTask);
+
+				if (tTask->GetTransferTaskType() == Make)
+				{
+					if (agTask->GetTaskDevId() == pCstaUnse->u.connectionCleared.releasingDevice.deviceID)
+					{
+						tskId = agTask->GetTaskId();
+						AGTask *canTransferTask = AGHelper::FindTaskByTaskId(tskId, CancelTransfer);
+						if (canTransferTask != NULL)
+						{
+							if (gAGHttpServer != NULL)
+							{
+								gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructCanDASuc(tskId));
+							}
+							AGHelper::RemoveTaskByTaskId(tskId, CancelTransfer);
+						}
+						AGHelper::RemoveTaskByRefId(refId, Transer);
+						AGHelper::SetIdleTaskDev(pCstaUnse->u.connectionCleared.releasingDevice.deviceID);
+					}
+				}
+				else if (tTask->GetTransferTaskType() == Consult)
+				{
+					if (agTask->GetTaskDevId() == pCstaUnse->u.connectionCleared.releasingDevice.deviceID)
+					{
+						tskId = agTask->GetTaskId();
+						AGTask *canTransferTask = AGHelper::FindTaskByTaskId(tskId, CancelTransfer);
+						if (canTransferTask != NULL)
+						{
+							if (gAGHttpServer != NULL)
+							{
+								gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructCanDASuc(tskId));
+							}
+							AGHelper::RemoveTaskByTaskId(tskId, CancelTransfer);
+						}
+						AGHelper::RemoveTaskByRefId(refId, Transer);
+						AGHelper::SetIdleTaskDev(pCstaUnse->u.connectionCleared.releasingDevice.deviceID);
+					}
+				}
+			}
+			
 		}
 		break;
 	case CSTA_DELIVERED:
 		{
 			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
-			if (agTask != NULL)
+			AGTask *tranTask = AGHelper::FindTaskByTaskDevRefId(refId, Transer);
+			if (tranTask != NULL)
 			{
-				std::string deliverId = pCstaUnse->u.delivered.alertingDevice.deviceID;
-				if (!deliverId.empty())
+				TransferTask *ttask = dynamic_cast<TransferTask *>(tranTask);
+
+				if (ttask->GetTransferTaskType() == Make)
 				{
-					std::string agentId = AGHelper::FindAgentIdByTerId(deliverId);
-					if (agentId != "NOFIND")
+
+					std::string deliverId = pCstaUnse->u.delivered.alertingDevice.deviceID;
+					if (!deliverId.empty())
 					{
-						if (gAGHttpServer != NULL)
+						std::string agentId = AGHelper::FindAgentIdByTerId(deliverId);
+						if (agentId != "NOFIND")
 						{
-						
-							gAGHttpServer->SendResponse(agTask->GetTaskId(),
-														gAGHttpServer->ConstructDisAgtSuc(agTask->GetTaskId(),
-																						  agentId));
+							gAGHttpServer->SendResponse(ttask->GetTaskId(),
+								gAGHttpServer->ConstructTranSuc(ttask->GetTaskId()));
+						}
+						else
+						{
+							if (ttask->GetDestNo() == deliverId)
+							{
+								gAGHttpServer->SendResponse(ttask->GetTaskId(),
+															gAGHttpServer->ConstructTranSuc(ttask->GetTaskId()));
+							}
 						}
 					}
 				}
+				else if (ttask->GetTransferTaskType() == Consult)
+				{
+					std::string deliverId = pCstaUnse->u.delivered.alertingDevice.deviceID;
+					if (!deliverId.empty())
+					{
+						std::string agentId = AGHelper::FindAgentIdByTerId(deliverId);
+						if (agentId != "NOFIND")
+						{
+							TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+							pNewCmd->activeCallId = ttask->GetActiveCallId();
+							pNewCmd->activeDevId = ttask->GetTaskDevId();
+							pNewCmd->heldCallId = ttask->GetHeldCallId();
+							pNewCmd->heldDevId = ttask->GetTaskDevId();
+							pNewCmd->tsapiCmdType = TranTransfer;
+							pNewCmd->invokeId = AGHelper::GenerateInvokeId(ttask->GetTaskDevId(), TranTransfer);
+							if (gCstaCmdThread != NULL)
+							{
+								gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+							}
+						}
+						else
+						{
+							if (ttask->GetDestNo() == deliverId)
+							{
+								TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+								pNewCmd->activeCallId = ttask->GetActiveCallId();
+								pNewCmd->activeDevId = ttask->GetTaskDevId();
+								pNewCmd->heldCallId = ttask->GetHeldCallId();
+								pNewCmd->heldDevId = ttask->GetTaskDevId();
+								pNewCmd->tsapiCmdType = TranTransfer;
+								pNewCmd->invokeId = AGHelper::GenerateInvokeId(ttask->GetTaskDevId(), TranTransfer);
+								if (gCstaCmdThread != NULL)
+								{
+									gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+								}
+							}
+						}
+					}
+				}
+				else
+				{
 
+				}
+			}
+			else
+			{
+				AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId,Distribute);
+				if (agTask != NULL)
+				{
+					std::string deliverId = pCstaUnse->u.delivered.alertingDevice.deviceID;
+					if (!deliverId.empty())
+					{
+						std::string agentId = AGHelper::FindAgentIdByTerId(deliverId);
+						if (agentId != "NOFIND")
+						{
+							if (gAGHttpServer != NULL)
+							{
+								DistributeAgentTask *dsaTask = dynamic_cast<DistributeAgentTask *>(agTask);
+								dsaTask->SetAgentId(agentId);
+								gAGHttpServer->SendResponse(agTask->GetTaskId(),
+															gAGHttpServer->ConstructDisAgtSuc(agTask->GetTaskId(),
+															agentId));
+							}
+						}
+					}
+				}
 			}
 		}
 		break;
@@ -332,33 +463,64 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 	case CSTA_FAILED:
 		{
 			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			AGTask *agTask = AGHelper::FindTaskByAssCallId(pCstaUnse->u.failed.failedConnection.callID);
 			if (agTask != NULL)
 			{
-				TsapiCommand_t *pNewCmd = new TsapiCommand_t();
-				pNewCmd->activeDevId = agTask->GetTaskDevId();
-				pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
-				pNewCmd->tsapiCmdType = Release;
-				pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, Release);
-				if (gCstaCmdThread != NULL)
+				if (agTask->GetTaskType() == Distribute)
 				{
-					gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
-				}
+					TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+					pNewCmd->activeDevId = agTask->GetTaskDevId();
+					pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
+					pNewCmd->tsapiCmdType = DistributeRelease;
+					pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, DistributeRelease);
 
-				//返回失败
-				if (gAGHttpServer != NULL)
+					if (gCstaCmdThread != NULL)
+					{
+						gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+					}
+					if (gAGHttpServer != NULL)
+					{
+
+						gAGHttpServer->SendResponse(agTask->GetTaskId(),
+							gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+					}
+				}
+				else if (agTask->GetTaskType() == Transer)
 				{
+					TransferTask *tranTask = dynamic_cast<TransferTask *>(agTask);
+					if (tranTask->GetTransferTaskType() == Make)
+					{
+						TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+						pNewCmd->activeDevId = agTask->GetTaskDevId();
+						pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
+						pNewCmd->tsapiCmdType = TransferRelease;
+						pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, TransferRelease);
 
-					gAGHttpServer->SendResponse(agTask->GetTaskId(),
-						                        gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+						if (gCstaCmdThread != NULL)
+						{
+							gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+						}
+						if (gAGHttpServer != NULL)
+						{
+
+							gAGHttpServer->SendResponse(agTask->GetTaskId(),
+								                        gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+						}
+					}
 				}
-
 			}
 		}
 		break;
 	case CSTA_HELD:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId, Transer);
+			if (agTask != NULL)
+			{
+				TransferTask *tranTask = dynamic_cast<TransferTask*>(agTask);
+				tranTask->SetHeldCallId(pCstaUnse->u.held.heldConnection.callID);	
+			}
+
 		}
 		break;
 	case CSTA_MONITOR_ENDED:
@@ -393,33 +555,58 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 		break;
 	case CSTA_QUEUED:
 		{
-			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
-			if (agTask != NULL)
-			{
-				//排队怎么样处理
 
-			}
 		}
 		break;
 	case CSTA_RETRIEVED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId, Transer);
+			if (agTask != NULL)
+			{
+				TransferTask *tranTask = dynamic_cast<TransferTask*>(agTask);
+				tranTask->SetActiveCallId(pCstaUnse->u.retrieved.retrievedConnection.callID);
+			}
 		}
 		break;
 	case CSTA_SERVICE_INITIATED:
 		{
 			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId);
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId, Distribute);
 			if (agTask != NULL)
 			{
-				agTask->SetTaskCallId(pCstaUnse->u.serviceInitiated.initiatedConnection.callID);
+				if (agTask->GetTaskCallId() == -1)
+				{
+					agTask->SetTaskCallId(pCstaUnse->u.serviceInitiated.initiatedConnection.callID);
+				}
+			}
+			AGTask *tranTask = AGHelper::FindTaskByTaskDevRefId(refId, Transer);
+			if (tranTask != NULL)
+			{
+				TransferTask *tTask = dynamic_cast<TransferTask*>(tranTask);
+				tTask->SetActiveCallId(pCstaUnse->u.serviceInitiated.initiatedConnection.callID);
 			}
 		}
 		break;
 	case CSTA_TRANSFERRED:
 		{
-			
+			long refId = pCstaUnse->monitorCrossRefId;
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId,Transer);
+			if (agTask != NULL)
+			{
+				if (agTask->GetTaskDevId() == pCstaUnse->u.transferred.transferringDevice.deviceID)
+				{
+					gAGHttpServer->SendResponse(agTask->GetTaskId(),
+												gAGHttpServer->ConstructTranSuc(agTask->GetTaskId()));
+					AGHelper::RemoveTaskByTaskId(agTask->GetTaskId(),Distribute);
+					AGHelper::RemoveTaskByTaskId(agTask->GetTaskId(),Transer);
+					AGHelper::SetIdleTaskDev(pCstaUnse->u.transferred.transferringDevice.deviceID);
+				}
+			}
+			else
+			{
+			}
+
 		}
 		break;
 	case CSTA_LOGGED_ON:

@@ -38,17 +38,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>..\..\..\headers\Ice-3.5.1;..\..\..\headers\libevent-2.0.21\include;..\..\..\headers\log4cplus-1.1.0\include;..\..\..\headers\tsapi-6.1.1\hdrs;..\..\..\headers\ServiceFrame;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\headers\boost_1_55_0;..\..\..\headers\Ice-3.5.1;..\..\..\headers\log4cplus-1.1.0\include;..\..\..\headers\tsapi-6.1.1\hdrs;..\..\..\headers\ServiceFrame;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-DBOOST_DATE_TIME_NO_LIB -DBOOST_REGEX_NO_LIB %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\..\libs\Ice-3.5.1\iceutild.lib;..\..\..\libs\libevent-2.0.21\libevent.lib;..\..\..\libs\libevent-2.0.21\libevent_core.lib;..\..\..\libs\libevent-2.0.21\libevent_extras.lib;..\..\..\libs\log4cplus-1.1.0\log4cplusD.lib;..\..\..\libs\tsapi-6.1.1\ATTPRV32.lib;..\..\..\libs\tsapi-6.1.1\csta32.lib;..\..\..\libs\ServiceFrame\ServiceFrameD.lib;ws2_32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\libs\boost_1_55_0\libboost_chrono-vc100-mt-gd-1_55.lib;..\..\..\libs\boost_1_55_0\libboost_thread-vc100-mt-gd-1_55.lib;..\..\..\libs\boost_1_55_0\libboost_system-vc100-mt-gd-1_55.lib;..\..\..\libs\Ice-3.5.1\iceutild.lib;..\..\..\libs\log4cplus-1.1.0\log4cplusD.lib;..\..\..\libs\tsapi-6.1.1\ATTPRV32.lib;..\..\..\libs\tsapi-6.1.1\csta32.lib;..\..\..\libs\ServiceFrame\ServiceFrameD.lib;ws2_32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -65,6 +66,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AGExcuteMakeCallThd.cpp" />
     <ClCompile Include="AGHelper.cpp" />
     <ClCompile Include="AGHttpServer.cpp" />
     <ClCompile Include="AGLogHelper.cpp" />
@@ -76,9 +78,17 @@
     <ClCompile Include="CstaInterface.cpp" />
     <ClCompile Include="CstaReconnect.cpp" />
     <ClCompile Include="DBHelper.cpp" />
+    <ClCompile Include="HttpServer\connection.cpp" />
+    <ClCompile Include="HttpServer\connection_manager.cpp" />
+    <ClCompile Include="HttpServer\mime_types.cpp" />
+    <ClCompile Include="HttpServer\reply.cpp" />
+    <ClCompile Include="HttpServer\request_handler.cpp" />
+    <ClCompile Include="HttpServer\request_parser.cpp" />
+    <ClCompile Include="HttpServer\server.cpp" />
     <ClCompile Include="MonitorThread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AGExcuteMakeCallThd.h" />
     <ClInclude Include="AGHttpServer.h" />
     <ClInclude Include="AGLogHelper.h" />
     <ClInclude Include="AGService.h" />
@@ -90,6 +100,15 @@
     <ClInclude Include="CstaInterface.h" />
     <ClInclude Include="CstaReconnect.h" />
     <ClInclude Include="DBHelper.h" />
+    <ClInclude Include="HttpServer\connection.hpp" />
+    <ClInclude Include="HttpServer\connection_manager.hpp" />
+    <ClInclude Include="HttpServer\header.hpp" />
+    <ClInclude Include="HttpServer\mime_types.hpp" />
+    <ClInclude Include="HttpServer\reply.hpp" />
+    <ClInclude Include="HttpServer\request.hpp" />
+    <ClInclude Include="HttpServer\request_handler.hpp" />
+    <ClInclude Include="HttpServer\request_parser.hpp" />
+    <ClInclude Include="HttpServer\server.hpp" />
     <ClInclude Include="MonitorThread.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

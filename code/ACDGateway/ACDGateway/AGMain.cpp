@@ -7,6 +7,7 @@
 #include "MonitorThread.h"
 #include "CstaReconnect.h"
 #include "AGHttpServer.h"
+#include "AGExcuteMakeCallThd.h"
 #include "AGUtil.h"
 
 AGService *gAGService;
@@ -58,7 +59,12 @@ BOOL AGService::OnStart()
 	if (gAGHttpServer == NULL)
 	{
 		gAGHttpServer = new AGHttpServer(AGHelper::sAcdgwCfg.httpSvrIp, 
-										 atoi(AGHelper::sAcdgwCfg.httpSvrPort.c_str()));
+										 AGHelper::sAcdgwCfg.httpSvrPort);
+	}
+
+	if (gAGExcuteMakeCall == NULL)
+	{
+		gAGExcuteMakeCall = new AGExcuteMakeCallThd();
 	}
 	return TRUE;
 }
@@ -111,6 +117,8 @@ void AGService::Main()
 	OUTINFOLOG("ACDGateway start monitor device thread.");
 	gAGHttpServer->start();
 	OUTINFOLOG("ACDGateway start http server thread.");
+	gAGExcuteMakeCall->start();
+	OUTINFOLOG("ACDGateway start make call task thread.");
 	StratMonitorDevice();
 
 	while (!isDone)
@@ -141,37 +149,24 @@ void AGService::Main()
 				case Distribute:
 					{
 						
-						TaskDev_t *taskDev = NULL;
-						while((taskDev = AGHelper::FindIdleTaskDev()) == NULL)
-						{
-							WaitForSingleObject(waitIdleDevHandle, INFINITE);
-						}
-						pTmpTask->SetRefId(taskDev->monitorRefId);
-						DistributeAgentTask *disTask = dynamic_cast<DistributeAgentTask *>(pTmpTask);
-						disTask->SetTaskDevId(taskDev->taskDevId);
-						disTask->SetDialNo( gDBHelper->GetDialNo(disTask->GetMediaType(), disTask->GetBusType(), disTask->GetCustLvl()));
-						AGHelper::AddTaskToTL(pTmpTask);
-						pTmpTask->ExcuteTask();
 					}
 					break;
 				case Transer:
 					{
-						TaskDev_t *taskDev = AGHelper::FindIdleTaskDev();
-						while((taskDev = AGHelper::FindIdleTaskDev()) == NULL)
-						{
-							WaitForSingleObject(waitIdleDevHandle, INFINITE);
-						}
-						pTmpTask->SetRefId(taskDev->monitorRefId);
 						TransferTask *transferTask = dynamic_cast<TransferTask *>(pTmpTask);
-						transferTask->SetTaskDevId(taskDev->taskDevId);
-						AGHelper::AddTaskToTL(pTmpTask);
-						pTmpTask->ExcuteTask();
+						if (transferTask->GetTransferTaskType() == Consult)
+						{
+							pTmpTask->ExcuteTask();
+						}
 					}
 					break;
 				case CancelDistribute:
+					{
+						pTmpTask->ExcuteTask();
+					}
+					break;
 				case CancelTransfer:
 					{
-						AGHelper::AddTaskToTL(pTmpTask);
 						pTmpTask->ExcuteTask();
 					}
 					break;
@@ -215,7 +210,14 @@ void AGService::AddTaskToTL(AGTask *agTask)
 	}
 
 }
-
+std::string AGService::GetDialNo(std::string medType, std::string busType, std::string cystLvl)
+{
+	if (gDBHelper != NULL)
+	{
+		return gDBHelper->GetDialNo(medType, busType, cystLvl);
+	}
+	return "";
+}
 
 
 HICON AGService::LoadAppIcon()

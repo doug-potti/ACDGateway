@@ -27,6 +27,9 @@ public:
 	bool QueryDeviceInfo(std::string  deviceId, unsigned long invokeId);
 	bool CallMake(std::string devId, std::string destNo, std::string userData,unsigned long invokeId);
 	bool CallRelease(std::string devId, long callId,unsigned long invokeId);
+	bool CallConsult(long callid, std::string devId, std::string destNo, std::string userData,unsigned long invokeId);
+	bool CallCancelConsult(long activeCallId, std::string activeDevId, long heldCallId, std::string heldDevId,unsigned long invokeId);
+	bool CallTransfer(long activeCallId, std::string activeDevId, long heldCallId, std::string heldDevId,unsigned long invokeId);
 	void SetPauseFlag(bool isPause);
 
 private:

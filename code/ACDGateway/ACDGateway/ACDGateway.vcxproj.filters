@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="AGHelper.cpp" />
+    <ClCompile Include="AGHttpServer.cpp" />
+    <ClCompile Include="AGLogHelper.cpp" />
+    <ClCompile Include="AGMain.cpp" />
+    <ClCompile Include="AGTask.cpp" />
+    <ClCompile Include="CstaCommand.cpp" />
+    <ClCompile Include="CstaErrorDesc.cpp" />
+    <ClCompile Include="CstaEventProcess.cpp" />
+    <ClCompile Include="CstaInterface.cpp" />
+    <ClCompile Include="CstaReconnect.cpp" />
+    <ClCompile Include="DBHelper.cpp" />
+    <ClCompile Include="MonitorThread.cpp" />
+    <ClCompile Include="HttpServer\connection.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\connection_manager.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\mime_types.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\reply.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\request_handler.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\request_parser.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpServer\server.cpp">
+      <Filter>HttpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="AGExcuteMakeCallThd.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AGHttpServer.h" />
+    <ClInclude Include="AGLogHelper.h" />
+    <ClInclude Include="AGService.h" />
+    <ClInclude Include="AGTask.h" />
+    <ClInclude Include="AGUtil.h" />
+    <ClInclude Include="CstaCommand.h" />
+    <ClInclude Include="CstaErrorDesc.h" />
+    <ClInclude Include="CstaEventProcess.h" />
+    <ClInclude Include="CstaInterface.h" />
+    <ClInclude Include="CstaReconnect.h" />
+    <ClInclude Include="DBHelper.h" />
+    <ClInclude Include="MonitorThread.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="HttpServer\connection.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\connection_manager.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\header.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\mime_types.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\reply.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\request.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\request_handler.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\request_parser.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpServer\server.hpp">
+      <Filter>HttpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="AGExcuteMakeCallThd.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ACDGateway.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\ico\ag_32.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="HttpServer">
+      <UniqueIdentifier>{055c3fbd-7351-48d2-92ca-4feffc8cfbcc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

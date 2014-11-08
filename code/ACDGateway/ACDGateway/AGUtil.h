@@ -52,8 +52,13 @@ enum EnTsapiCmdType
 {
 	MonitorDevice,
 	MonitorViaDevice,
-	MakeCall,
-	Release,
+	DistributeMakeCall,
+	DistributeRelease,
+	TransferMakeCall,
+	TransferRelease,
+	TranConsult,
+	CancelTranConsult,
+	TranTransfer,
 };
 
 enum EnDevType
@@ -187,15 +192,19 @@ public:
 	static void          AddTaskDevToTDL(TaskDev_t *taskDev);
 	static TaskDev_t*    FindIdleTaskDev();
 	static void          SetIdleTaskDev(std::string devId);
+	static void          SetIdleDevHandle();
 
 	static void          AddTaskToTL(AGTask *agTask);
 	static bool          IsExistTask(std::string taskId, EnTaskType taskType);
-	static AGTask*       FindTaskByTaskDevRefId(long monRefId);
-	static AGTask*       FindTaskByTaskId(std::string taskId);
-	static AGTask*       FindTaskByDevId(std::string devId);
-	static void          RemoveTaskByRefId(long refId);
-	static void          RemoveTaskByTaskId(std::string taskId);
-	static void          RemoveTaskByDevId(std::string devId);
+	static AGTask*       FindTaskByTaskDevRefId(long monRefId, EnTaskType taskType);
+	static AGTask*       FindTaskByTaskId(std::string taskId,EnTaskType taskType);
+	static AGTask*       FindTaskByDevId(std::string devId, EnTaskType taskType);
+	static AGTask*       FindTaskByAssCallId(long callId);
+	static bool          IsExistTaskByTaskIdAgtId(std::string taskId, std::string agentId);
+	static void          RemoveTaskByRefId(long refId, EnTaskType taskType);
+	static void          RemoveTaskByTaskId(std::string taskId, EnTaskType taskType);
+	static void          RemoveTaskByDevId(std::string devId, EnTaskType taskType);
+	static void          RemoveTaskByCallId(long callId);
 
 	static void          AddTerAgtToLM(std::string logonTerId, std::string agentId);
 	static void          RemoveTerAgtFromLM(std::string terId);

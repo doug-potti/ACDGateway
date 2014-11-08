@@ -31,43 +31,66 @@ namespace AGMIR
 
         private void btnDis_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtReqId.Text) ||
-                string.IsNullOrWhiteSpace(txtMediaType.Text) ||
-                string.IsNullOrWhiteSpace(txtBusType.Text) ||
-                string.IsNullOrWhiteSpace(txtCustLv.Text))
+
+             WebClient wc = new WebClient();
+             Uri uri = new Uri(string.Format("{0}/DistributeMultimediaCall.html?Id={1}&Mediatype={2}&Businesstype={3}&Customlevel={4}",
+                                              AGUrl,
+                                              txtReqId.Text,
+                                              txtMediaType.Text,
+                                              txtBusType.Text,
+                                              txtCustLv.Text), UriKind.RelativeOrAbsolute);
+
+            wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
+            wc.OpenReadAsync(uri);
+
+
+        }
+
+        void wc_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
+        {
+
+            if (e.Error == null)
             {
-                return;
+                var streamReader = new StreamReader(e.Result);
+                var result = streamReader.ReadToEnd();
+                rtInfo.Text = rtInfo.Text + result + "\n";
             }
+            else
+            {
+                rtInfo.Text = rtInfo.Text + e.Error + "\n";
+            }
+
+        }
+        
+        private void button1_Click(object sender, EventArgs e)
+        {
             WebClient wc = new WebClient();
-            Uri uri = new Uri(string.Format("{0}/DistributeMultimediaCall.html?Id={1}&Mediatype={2}&Businesstype={3}&Customlevel={4}",
+            Uri uri = new Uri(string.Format("{0}/CancelDistributeMultimediaCall.html?Id={1}",
                                              AGUrl,
-                                             txtReqId.Text,
-                                             txtMediaType.Text,
-                                             txtBusType.Text,
-                                             txtCustLv.Text), UriKind.RelativeOrAbsolute);
+                                             txtReqId.Text), UriKind.RelativeOrAbsolute);
+            wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
+            wc.OpenReadAsync(uri);
+        }
+
+        private void btnTrans_Click(object sender, EventArgs e)
+        {
+            WebClient wc = new WebClient();
+            Uri uri = new Uri(string.Format("{0}/Transfer.html?Id={1}&Srcagentid={2}&Destinationagentid={3}",
+                                             AGUrl,
+                                             txtTransId.Text,
+                                             txtSrcId.Text,
+                                             txtDstId.Text), UriKind.RelativeOrAbsolute);
 
             wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
             wc.OpenReadAsync(uri);
         }
 
-        void wc_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
+        private void btnCancelTrans_Click(object sender, EventArgs e)
         {
-            StreamReader read = new StreamReader(e.Result);
-            string result = read.ReadToEnd();
-            rtInfo.Text = rtInfo.Text + result + "\n";
-        }
-        
-        private void button1_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtReqId.Text))
-            {
-                return;
-            }
             WebClient wc = new WebClient();
-            Uri uri = new Uri(string.Format("{0}/CancelDistributeMultimediaCall.html?Id={1}",
+            Uri uri = new Uri(string.Format("{0}/CancelTransfer.html?Id={1}",
                                              AGUrl,
-                                             txtReqId.Text), UriKind.RelativeOrAbsolute);
-
+                                             txtTransId.Text), UriKind.RelativeOrAbsolute);
             wc.OpenReadCompleted += new OpenReadCompletedEventHandler(wc_OpenReadCompleted);
             wc.OpenReadAsync(uri);
         }
