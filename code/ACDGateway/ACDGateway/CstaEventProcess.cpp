@@ -244,11 +244,67 @@ void CstaEventProcess::ProcessCSTAConfirmation(AvayaPbxEvent_t * pbxEventData)
 						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
 					}
 					AGHelper::RemoveTaskByDevId(deviD, Transer);
-					AGHelper::SetIdleTaskDev(deviD);
+					AGHelper::SetIdleTaskDev(deviD);	
+				}
+			}
+			else if(cstaReqType == (int)TranConsult)
+			{
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD, Transer);
+				if (agTask != NULL)
+				{
+					std::string tskId = agTask->GetTaskId();
+					TransferTask *tTask = dynamic_cast<TransferTask *>(agTask);
+					if (gAGHttpServer != NULL)
+					{
+						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
+					}
+					//»Ö¸´×´Ì¬
+					TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+					pNewCmd->activeDevId = tTask->GetTaskDevId();
+					pNewCmd->activeCallId = tTask->GetActiveCallId();
+					pNewCmd->heldCallId = tTask->GetHeldCallId();
+					pNewCmd->heldDevId = tTask->GetTaskDevId();
+					pNewCmd->tsapiCmdType = CancelTranConsult;
+					pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, CancelTranConsult);
+					if (gCstaCmdThread != NULL)
+					{
+						gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+					}
 					
 				}
 			}
-			else
+			else if (cstaReqType == (int)CancelTranConsult)
+			{
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD, CancelTransfer);
+				if (agTask != NULL)
+				{
+					std::string tskId = agTask->GetTaskId();
+					if (gAGHttpServer != NULL)
+					{
+						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
+					}
+					//»Ö¸´×´Ì¬
+					AGHelper::RemoveTaskByDevId(deviD, CancelTransfer);
+				}
+			}
+			else if (cstaReqType == (int)TranTransfer)
+			{
+				AGTask *agTask = AGHelper::FindTaskByDevId(deviD, Transer);
+				if (agTask != NULL)
+				{
+					std::string tskId = agTask->GetTaskId();
+					if (gAGHttpServer != NULL)
+					{
+						gAGHttpServer->SendResponse(tskId,gAGHttpServer->ConstructFailDesc(tskId, "ResourceBusy"));
+					}
+					//»Ö¸´×´Ì¬
+				}
+			}
+			else if (cstaReqType == (int)DistributeRelease)
+			{
+
+			}
+			else if (cstaReqType == (int)TransferRelease)
 			{
 
 			}
@@ -463,16 +519,37 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 	case CSTA_FAILED:
 		{
 			long refId = pCstaUnse->monitorCrossRefId;
-			AGTask *agTask = AGHelper::FindTaskByAssCallId(pCstaUnse->u.failed.failedConnection.callID);
+			AGTask *agTask = AGHelper::FindTaskByTaskDevRefId(refId,Distribute);
 			if (agTask != NULL)
 			{
-				if (agTask->GetTaskType() == Distribute)
+				TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+				pNewCmd->activeDevId = agTask->GetTaskDevId();
+				pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
+				pNewCmd->tsapiCmdType = DistributeRelease;
+				pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, DistributeRelease);
+
+				if (gCstaCmdThread != NULL)
+				{
+					gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
+				}
+				if (gAGHttpServer != NULL)
+				{
+
+					gAGHttpServer->SendResponse(agTask->GetTaskId(),
+						gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+				}
+			}
+			AGTask *transferTask = AGHelper::FindTaskByTaskDevRefId(refId,Transer);
+			if (transferTask != NULL)
+			{
+				TransferTask* tTask = dynamic_cast<TransferTask*>(transferTask);
+				if (tTask->GetTransferTaskType() == Consult)
 				{
 					TsapiCommand_t *pNewCmd = new TsapiCommand_t();
-					pNewCmd->activeDevId = agTask->GetTaskDevId();
+					pNewCmd->activeDevId = tTask->GetTaskDevId();
 					pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
-					pNewCmd->tsapiCmdType = DistributeRelease;
-					pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, DistributeRelease);
+					pNewCmd->tsapiCmdType = TransferRelease;
+					pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, TransferRelease);
 
 					if (gCstaCmdThread != NULL)
 					{
@@ -480,34 +557,29 @@ void CstaEventProcess::ProcessCSTAUnsolicited(AvayaPbxEvent_t * pbxEventData)
 					}
 					if (gAGHttpServer != NULL)
 					{
-
-						gAGHttpServer->SendResponse(agTask->GetTaskId(),
-							gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
+						gAGHttpServer->SendResponse(tTask->GetTaskId(),
+													gAGHttpServer->ConstructFailDesc(tTask->GetTaskId(),"CstaCallFailed"));
 					}
+					
 				}
-				else if (agTask->GetTaskType() == Transer)
+				else if (tTask->GetTransferTaskType() == Make)
 				{
-					TransferTask *tranTask = dynamic_cast<TransferTask *>(agTask);
-					if (tranTask->GetTransferTaskType() == Make)
+					TsapiCommand_t *pNewCmd = new TsapiCommand_t();
+					pNewCmd->activeDevId = tTask->GetTaskDevId();
+					pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
+					pNewCmd->tsapiCmdType = TransferRelease;
+					pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, TransferRelease);
+
+					if (gCstaCmdThread != NULL)
 					{
-						TsapiCommand_t *pNewCmd = new TsapiCommand_t();
-						pNewCmd->activeDevId = agTask->GetTaskDevId();
-						pNewCmd->activeCallId = pCstaUnse->u.failed.failedConnection.callID;
-						pNewCmd->tsapiCmdType = TransferRelease;
-						pNewCmd->invokeId = AGHelper::GenerateInvokeId(pNewCmd->activeDevId, TransferRelease);
-
-						if (gCstaCmdThread != NULL)
-						{
-							gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
-						}
-						if (gAGHttpServer != NULL)
-						{
-
-							gAGHttpServer->SendResponse(agTask->GetTaskId(),
-								                        gAGHttpServer->ConstructFailDesc(agTask->GetTaskId(),"CstaCallFailed"));
-						}
+						gCstaCmdThread->AddTsapiCmdToQueue(pNewCmd);
 					}
-				}
+					if (gAGHttpServer != NULL)
+					{
+						gAGHttpServer->SendResponse(tTask->GetTaskId(),
+													gAGHttpServer->ConstructFailDesc(tTask->GetTaskId(),"CstaCallFailed"));
+					}
+				}	
 			}
 		}
 		break;
